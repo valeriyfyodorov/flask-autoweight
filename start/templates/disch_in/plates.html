@@ -15,6 +15,12 @@
     opacity: 1; /* Firefox */
   }
 
+.box {
+  width: 200px;
+}
+
+
+
 </style>
 
 {% endblock %}
@@ -45,30 +51,35 @@
 
   <form method="post" action="{{action}}" id="form" >
 
-  <div class="row" >
-      <div class="col-sm-6 text-right d-flex justify-content-end">  
-            
-          <h5>
-            {{voc["frontPlateLabelText"] }}
-              </h5>
-              <input id="ptf" name="ptf" class="form-control" type="text" autofocus 
-              value="{{front}}" 
-              onClick="this.setSelectionRange(0, this.value.length)"
-              placeholder="XX0000" style="width: 70%; font-size:4em; background-color: antiquewhite;">
-        
-            
-      </div>  
-      <div class="col-sm-6 text-left d-flex justify-content-start">   
-        <input id="ptr" name="ptr" class="form-control" type="text" 
-        value="{{rear}}" 
-        onClick="this.setSelectionRange(0, this.value.length)"
-        placeholder="X0000" style="width: 70%; font-size:4em; background-color: antiquewhite;">
-              <h5>
-                {{voc["rearPlateLabelText"] }}
-                  </h5>
-            
-        </div>   
+
+
+<div class="row">
+  <div class="col-sm-6 text-center">
+    <h5>
+      {{voc["frontPlateLabelText"] }}
+    </h5>
   </div>
+  <div class="col-sm-6 text-center">
+    <h5>
+      {{voc["rearPlateLabelText"] }}
+    </h5>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-sm-6 d-flex justify-content-center">
+    <div class="box">
+      <span class="registration-ui"><input id="ptf" name="ptf" type="text" size="6" autofocus value="{{front}}" onClick="this.setSelectionRange(0, this.value.length)" placeholder="XX0000"></span>
+    </div>
+  </div>
+  <div class="col-sm-6 d-flex justify-content-center">
+    <div class="box">
+      <span class="registration-ui"><input id="ptr" name="ptr" type="text" size="6" autofocus value="{{rear}}" onClick="this.setSelectionRange(0, this.value.length)" placeholder="X0000"></span>
+    </div>
+  </div>
+</div>
+
+
   <div class="row">
     <div class="col-sm-12">
       <p></p>

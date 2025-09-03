@@ -1,0 +1,90 @@
+﻿{% extends "base.html" %}
+
+{% block styles %}
+<style type="text/css">
+
+.row {
+        padding-top: 50px;
+      }
+
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid text-center">
+  <!-- Main component container start -->
+  <div class=" extraspace" >
+    <div class="col-md-12">
+      <p></p>
+    </div>
+  </div>
+
+
+  <div class="row" >
+    <div class="col-md-12">
+            <h2>
+              {{voc["instructionText"] | safe}}
+
+            </h2>
+    </div>         
+</div>
+
+
+<div class="row" >
+  <div class="col-sm-3">
+      
+    <a id="leftLink" class="btn btn-secondary btn-lg btn-xl btn-block" href="{{buttons['left']['url']}}">
+      <i class="fas fa-arrow-left"></i> 
+   <br />
+   {{buttons['left']['textAbove']}}
+   <br />
+   {{buttons['left']['textBelow']}}
+    </a>
+       
+          
+  </div>
+
+
+  <div class="col-sm-3 offset-sm-6">
+    <a id="rightLink" class="btn btn-secondary btn-lg btn-xl btn-block" href="{{buttons['right']['url']}}">
+      <i class="fas fa-arrow-right"></i> 
+    <br />
+    {{buttons['right']['textAbove']}}
+   <br />
+   {{buttons['right']['textBelow']}}
+    </a>
+        
+    </div>
+
+
+</div>
+
+ 
+
+
+<div class="extraspace" >
+  <div class="col-md-12">
+    <p></p>
+  </div>
+</div>
+
+<div class="row" >
+  <div class="col-md-10 offset-md-1">
+    <a href="{{url_for('index')}}" class="btn btn-danger btn-lg btn-xl btn-block" role="button">
+            X
+        </a>     
+  </div>
+</div>
+
+
+        
+
+</div> <!-- /container -->
+
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {% include 'idle_script.html' %}
+{% endblock %}

@@ -32,17 +32,17 @@ def captureInvoiceToFile():  # return true if invoice photo was success
     if MAC_OS:
         result = not isThisEmptyBox(Image.open(DUMMY_IMG_INVOICE))
         copyfile(DUMMY_IMG_INVOICE, TEMP_INVOICE_IMG_FILE)
-        rotateAndResave(TEMP_INVOICE_IMG_FILE, -90)
+        rotateAndResave(TEMP_INVOICE_IMG_FILE, 90)
     else:
         with PiCamera() as camera:
             light_on()
             camera.start_preview()
             time.sleep(2)
             camera.capture(TEMP_INVOICE_IMG_FILE)
-            time.sleep(0.5)
+            time.sleep(0.8)
             result = not isThisEmptyBox(Image.open(TEMP_INVOICE_IMG_FILE))
             if result:
-                rotateAndResave(TEMP_INVOICE_IMG_FILE, -90)
+                rotateAndResave(TEMP_INVOICE_IMG_FILE, 90)
             # maybe recgnize number in a future
             number = "XXX"
             light_off()

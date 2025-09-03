@@ -1,0 +1,73 @@
+﻿{% extends "base.html" %}
+
+{% block styles %}
+<style type="text/css">
+
+.row {
+        padding-top: 50px;
+      }
+
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid text-center">
+  <!-- Main component container start -->
+  <div class=" extraspace" >
+    <div class="col-md-12">
+      <p></p>
+    </div>
+  </div>
+
+  <div class="row" >
+    <div class="col-md-12">
+            <h2>
+              {{voc["instructionText"] | safe}}
+
+            </h2>
+    </div>         
+  </div>
+  {% for shipperList in shippersLists %}
+      <div class="row" >
+        <div class="col-md-10 offset-md-1">
+          <a class="btn btn-secondary btn-lg btn-xl btn-block" href="{{url_for('factories')+query}}&list={{shipperList['listId']}}">
+              
+            {{shipperList['cargoName']}}
+            - 
+            {% if (shipperList['truckScalesHeading'] | length)  > 0 %}
+                {{shipperList['truckScalesHeading']}}
+            {% else %}
+              {{shipperList['shipperName']}}
+            {% endif %}
+          </a>
+        </div>
+      </div>
+  {% endfor %}
+      
+
+<div class="extraspace" >
+  <div class="col-md-12">
+    <p></p>
+  </div>
+</div>
+
+<div class="row" >
+  <div class="col-md-4 offset-md-4">
+    <a href="{{url_for('index')}}" class="btn btn-danger btn-lg btn-xl btn-block" role="button">
+            X
+        </a>     
+  </div>
+</div>
+
+
+        
+
+</div> <!-- /container -->
+
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {% include 'idle_script.html' %}
+{% endblock %}

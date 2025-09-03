@@ -37,7 +37,11 @@ def scales():
     voc = vocabulary[lng]["scales"]
     url = url_for('invoice') if "disch_in" == request.args.get(
         'dir') else url_for('qrcode')
+    print(f" Left {time.strftime('%H:%M:%S')}")
+
     weightLeft = getWeightKg("north")
+    print(f" Right {time.strftime('%H:%M:%S')}")
+
     weightRight = getWeightKg("south")
     # weightLeft = 20000 #for test reasons
     # weightRight = 20000
@@ -45,7 +49,9 @@ def scales():
         return redirect(
             url_for("unknownerror") + f"?lng={lng}&error=Small weight"
         )
+    print(f" PlatesLeft {time.strftime('%H:%M:%S')}")
     platesLeft = getPlatesNumbers("north", weight=weightLeft)
+    print(f" PlatesRight {time.strftime('%H:%M:%S')}")
     platesRight = getPlatesNumbers("south", weight=weightRight)
     scaleIdLeft = SCALES["north"]["id"]
     scaleIdRight = SCALES["south"]["id"]
@@ -64,9 +70,11 @@ def scales():
             "textBelow": platesRight.rear,
         },
     }
+    print(f" IFLeft {time.strftime('%H:%M:%S')}")
     if weightLeft < 3000:
         print(f"right scale only proceed to plate {time.strftime('%H:%M:%S')}")
         return redirect(buttons["right"]["url"])  # no left weight, no choice
+    print(f" IFRight {time.strftime('%H:%M:%S')}")
     if weightRight < 3000:
         print(f"left scale only proceed to plate {time.strftime('%H:%M:%S')}")
         return redirect(buttons["left"]["url"])  # no right weight no choice

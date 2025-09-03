@@ -1,0 +1,119 @@
+﻿{% extends "base.html" %}
+
+{% block styles %}
+<style>
+  table,
+  th,
+  td {
+    border: 0 transparent black;
+  }
+
+  th,
+  td {
+    padding: 0px;
+    vertical-align: top;
+  }
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid text-center">
+  <!-- Main component container start -->
+  <div style="margin-top: 20px; text-align: center;">
+    <img src="{{ url_for('static', filename='images/logo.jpg') }}" width="80px"
+      style="display: block; margin-left: auto; margin-right: auto;" />
+  </div>
+
+  <div style="margin-top: 20px; text-align: center">
+    <h3>Izkrausanas atļauja Nr IE-{{content["tranunit_id"]}}</h3>
+    <p style="text-align: center;">
+      {% if content["showIncomingTitle"] %}
+      Lūdzam parādiet šo dokumentu izlādējoties
+      {% endif %}
+    </p>
+
+    <p style="text-align: center; margin-top: 0px;">
+      Izdrukas laiks: {{content["print_time"]}}
+    </p>
+  </div>
+
+  <div style="text-align: left; margin-top: 30px;">
+    <table style="margin-left: auto; margin-right: auto;">
+      <tbody>
+        <tr>
+          <td style="width:85px;">
+            Izsniegts:
+          </td>
+          <td style="width:198px;">
+            SIA "Alpha Osta"
+          </td>
+          <td style="width:28px;">
+          </td>
+          <td style="width:66px;">
+            Klients:
+          </td>
+          <td style="width:223px;">
+            {{content["clientName"]}}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p style="text-align: center; font-weight: bold;">
+    A/m valsts nr: {{content["nr"]}}
+  </p>
+  <p style="text-align: center;">
+    Krava: {{content["cargoName"]}}
+  </p>
+
+  <p style="text-align: center;">
+    Svēršanas laiks: {{content["issueMoment"]}}
+    Svaru ID: {{content["scaleId"]}}
+    Bruto svars: {{content["grossWeightScales"]}} kg
+  </p>
+
+  <h4 style="text-align: center;">
+    Izkraušanas instrukcijas:
+  </h4>
+  <h1 style="text-align: center">
+    {{content["info"]}}
+  </h1>
+  <p style="text-align: center;">
+    <img src="{{ url_for('qrimg')}}?code={{content['tranunit_id']}}" style="height:150px;width:150px;" />  
+  </p>
+
+  <p style="text-align: center;">
+    Ievešanas pavadzīmes numurs un deklarēts svars:  {{content["extraHeading"]}}
+  </p>
+  <p>
+    Piezīmes:
+    {{content["remark"]}}
+  </p>
+
+  <div style="margin-top: 0; text-align: center;">
+    <img src="{{url_for('static', filename='images/schemes/')}}{{content['drivingScheme']}}" width="400"
+      style="display: block; margin-left: auto; margin-right: auto;" />
+  </div>
+
+  <div style="margin-top: 0; text-align: center;">
+    Šis dokuments ir sagatavots elektroniski un derīgs bez paraksta
+  </div>
+
+</div> <!-- /container -->
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  $(function() {
+      window.print();
+      setTimeout("closePrintView()", 5000);
+  });
+  function closePrintView() {
+      document.location.href = "{{url_for("waitprint")}}" + document.location.search;
+  }
+</script>
+{% endblock %}

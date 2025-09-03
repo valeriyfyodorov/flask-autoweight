@@ -1,0 +1,93 @@
+﻿{% extends "base.html" %}
+
+{% block styles %}
+<style type="text/css">
+
+.row {
+        padding-top: 50px;
+      }
+
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid text-center" id="maindiv">
+  <!-- Main component container start -->
+ 
+ 
+  <div class="row" ><div class="col-md-12"><p></p></div></div>
+
+
+  <div class="row" >
+    <div class="col-md-12">
+            <h2>
+              {{voc["instructionText"] | safe}}
+
+            </h2>
+    </div>         
+  </div>
+
+  
+
+  <div class="row" >
+      <div class="col-md-12" id="buttoninstructions">
+          <img src="{{ url_for('static', filename='images/qr.gif') }}" class="img-responsive" />
+      </div>          
+  </div>
+
+  <div class="row" ><div class="col-md-12"><p></p></div></div>
+
+
+  <div class="row" >
+    <div class="col-md-10 offset-md-1">
+      <a class="btn btn-success btn-lg btn-xl" href="{{url_for('farewell')+query}}" 
+      onclick="document.getElementById('maindiv').style.display = 'none'; Pace.restart(); "
+      >
+        
+          {{voc["readyButtonText"]}}
+      
+      </a>
+    </div>
+  </div>
+
+<div class="extraspace" >
+  <div class="col-md-12">
+    <p></p>
+  </div>
+</div>
+
+  <div class="row" >
+      <div class="col-md-4 offset-md-4">
+        <a href="{{url_for('index')}}" class="btn btn-danger btn-lg btn-xl btn-block" role="button">
+                X
+            </a>     
+      </div>
+  </div>
+  
+
+
+ <div class="row" >
+  <div class="col-md-12">
+    <img src="{{ url_for('static', filename='images/arrow.gif') }}" class="img-responsive" />
+  </div>
+</div>
+
+
+
+
+
+
+
+</div> <!-- /container -->
+
+
+
+
+
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {% include 'idle_script.html' %}
+{% endblock %}

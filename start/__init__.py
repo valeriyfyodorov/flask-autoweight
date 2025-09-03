@@ -1,6 +1,6 @@
 import os
 from flask import Flask
-from .intranet.config import DB_SERVER_URL, DB_SERVER_API_URL
+from .intranet.config import SERVER_URL, SERVER_API_URL
 
 app = Flask(__name__)
 app.config.from_mapping(
@@ -8,8 +8,8 @@ app.config.from_mapping(
         DATABASE=os.path.join(app.instance_path, 'flaskrun.sqlite'),
         MEDIA_FOLDER=os.path.join(app.root_path, 'media'),
         JSON_FOLDER=os.path.join(app.root_path, 'json'),
-        DB_SERVER_URL=DB_SERVER_URL,
-        DB_SERVER_API_URL=DB_SERVER_API_URL,
+        DB_SERVER_URL=SERVER_URL,
+        DB_SERVER_API_URL=SERVER_API_URL,
     )
 from . import routes
 from .intranet import startup

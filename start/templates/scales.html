@@ -9,6 +9,8 @@
 
 </style>
 
+
+
 {% endblock %}
 
 {% block content %}
@@ -56,33 +58,57 @@
 <div class="row" >
   <div class="col-sm-3">
       
-    <a id="leftLink" class="btn btn-secondary btn-lg btn-xl btn-block shadow" href="{{buttons['left']['url']}}">
+    <a id="leftLink" class="btn btn-secondary btn-lg btn-xxl btn-block shadow" href="{{buttons['left']['url']}}">
       <i class="fas fa-arrow-left"></i> 
-   <br />
-   {{buttons['left']['textAbove']}}
-   <br />
-   {{buttons['left']['textBelow']}}
-    </a>
-       
-          
+     </a>
   </div>
 
 
   <div class="col-sm-3 offset-sm-6">
-    <a id="rightLink" class="btn btn-secondary btn-lg btn-xl btn-block shadow" href="{{buttons['right']['url']}}">
+    <a id="rightLink" class="btn btn-secondary btn-lg btn-xxl btn-block shadow" href="{{buttons['right']['url']}}">
       <i class="fas fa-arrow-right"></i> 
-    <br />
-    {{buttons['right']['textAbove']}}
-   <br />
-   {{buttons['right']['textBelow']}}
-    </a>
-        
-    </div>
-
-
+      </a>  
+  </div>
 </div>
 
- 
+
+<div class="row" >
+  <div class="col-sm-3">
+   <div class="codepen-wrapper">
+     <span class="registration-ui">{{buttons['left']['textAbove']}}</span>
+   </div>
+   <br />
+   <div class="codepen-wrapper">
+     <span class="registration-ui">{{buttons['left']['textBelow']}}</span>
+   </div>
+  </div>
+
+
+  <div class="col-sm-3 offset-sm-6">
+   <div class="codepen-wrapper">
+     <span class="registration-ui">{{buttons['right']['textAbove']}}</span>
+   </div>
+   <br />
+   <div class="codepen-wrapper">
+     <span class="registration-ui">{{buttons['right']['textBelow']}}</span>
+   </div>
+  </div>
+</div>
+
+
+<div class="row" >
+  <div class="col-sm-3">
+     
+
+  </div>
+
+
+  <div class="col-sm-3 offset-sm-6">
+  </div>
+</div>
+
+
+
 
 
 <div class="extraspace" >

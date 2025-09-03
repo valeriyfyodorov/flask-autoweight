@@ -1,4 +1,4 @@
-MAC_OS = True
+MAC_OS = False
 MAC_TEST_LOCATION = '/Users/Valera/Documents/venprojs/pi/latest/html/'
 
 if MAC_OS:
@@ -24,6 +24,15 @@ GPIO.output(GPIO_LAMP, False)
 
 CHECK_SAMPLER_HOMING = True
 
+
+
+#if CHECK_SAMPLER_HOMING:
+#    GPIO.setup(23, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Button GPIO23  Rakoraf1 (Scales 1)
+#    GPIO.setup(24, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Button GPIO24  Rakoraf2 (Scales 2)
+
+
+
+
 # ls /dev/video* first for right camera device here, minus 1 means first working
 VIDEO_CAPTURE_DEVICE = -1
 WEBCAM_BUFFER_SIZE = 5
@@ -42,11 +51,15 @@ TEMP_INVOICE_IMG_FILE = IMAGES_DIRECTORY + 'invoice.jpg'
 TEMP_PLATE_IMG_FILE_FRONT = IMAGES_DIRECTORY + 'front.jpg'
 TEMP_PLATE_IMG_FILE_REAR = IMAGES_DIRECTORY + 'rear.jpg'
 
-DB_SERVER_URL = "https://backup.amgs.me/autoweight/"
-DB_SERVER_API_URL = "http://amgs.me/apijson.ashx?key=gd3784h67hxgugb"
+SERVER_URL="http://notscr.amgs.me/autoweight"
+SERVER_API_URL="http://notscr.amgs.me/apijson.ashx?key=gd3784h67hxgugb" 
+
+#ALPR_API_TOKEN = 'Token 702d66a3f614a31139fefd757892acfb85771ee7'
+#ALPR_URL = 'https://api.platerecognizer.com/v1/plate-reader'
 
 ALPR_API_TOKEN = 'Token 702d66a3f614a31139fefd757892acfb85771ee7'
-ALPR_URL = 'https://backup.platerecognizer.com/v1/plate-reader'
+ALPR_URL = 'http://192.168.100.5:8080/v1/plate-reader/'
+
 
 SCALES_NAME_FOR_ID = {"2": "north", "1": "south"}
 TRAFFIC_LIGHT_API_URL = "http://192.168.21.82:8123/api/services/mqtt/publish"
@@ -57,68 +70,71 @@ SCALES = {
         "id": 2,
         "cam_front":
         {
-            "url": "rtsp://192.168.20.183:554/video2",
-            "crop_ratio": [0.3, 0.97, 0.255, 0.99],
+            "url": "rtsp://192.168.120.183:554/video2",
+            "crop_ratio": [0.001, 0.999, 0.001, 0.999],
             "warp_from": [[400, 400], [500, 400], [500, 500], [400, 500]],
             "warp_to": [[400, 400], [500, 400], [500, 500], [400, 500]],
         },
         "cam_rear":
         {
-            "url": "rtsp://192.168.20.184:554/video2",
-            "crop_ratio": [0.39, 0.81, 0.35, 0.8],
+            "url": "rtsp://192.168.120.184:554/video2",
+            "crop_ratio": [0.001, 0.999, 0.001, 0.999],
             "warp_from": [[400, 400], [500, 400], [500, 500], [400, 500]],
             "warp_to": [[400, 400], [500, 400], [500, 500], [400, 500]],
         },
         "cam_top":
         {
-            "url": "rtsp://192.168.20.185:554/video2",
-            "crop_ratio": [0.5, 0.7, 0.4, 0.6],
+            "url": "rtsp://192.168.120.185:554/media/video2",
+            "crop_ratio": [0.1, 0.9, 0.1, 0.9],
             "warp_from": [[528, 332], [528, 355], [631, 354], [631, 332]],
             "warp_to": [[528, 332], [528, 355], [631, 354], [631, 332]],
         },
         "modbus":
         {
-            "host": "192.168.21.124",
+            "host": "192.168.130.124",
             "port": 505,
         },
         "light_topic_front": "trafficlights/ts2ftl/status",
         "light_topic_rear": "trafficlights/ts2rtl/status",
         "sampler_homing_gpio_port": 24,
+        
     },
     "south":
     {
         "id": 1,
         "cam_front":
         {
-            "url": "rtsp://192.168.20.180:554/video2",
-            "crop_ratio": [0.3, 0.97, 0.255, 0.99],
+            "url": "rtsp://192.168.120.180:554/video2",
+            "crop_ratio": [0.001, 0.999, 0.001, 0.999],
             "warp_from": [[400, 400], [500, 400], [500, 500], [400, 500]],
             "warp_to": [[400, 400], [500, 400], [500, 500], [400, 500]],
         },
         "cam_rear":
         {
-            "url": "rtsp://192.168.20.181:554/video2",
-            "crop_ratio": [0.39, 0.81, 0.35, 0.8],
+            "url": "rtsp://192.168.120.181:554/video2",
+            "crop_ratio": [0.001, 0.999, 0.001, 0.999],
             "warp_from": [[400, 400], [500, 400], [500, 500], [400, 500]],
             "warp_to": [[400, 400], [500, 400], [500, 500], [400, 500]],
         },
         "cam_top":
         {
-            "url": "rtsp://192.168.20.182:554/video2",
-            "crop_ratio": [0.3, 0.5, 0.3, 0.5],
+            "url": "rtsp://192.168.120.182:554/media/video2",
+            "crop_ratio": [0.1, 0.9, 0.1, 0.9],
             "warp_from": [[528, 332], [528, 355], [631, 354], [631, 332]],
             "warp_to": [[528, 332], [528, 355], [631, 354], [631, 332]],
         },
         "modbus":
         {
-            "host": "192.168.21.124",
+            "host": "192.168.130.124",
             "port": 504,
         },
         "light_topic_front": "trafficlights/ts1ftl/status",
         "light_topic_rear": "trafficlights/ts1rtl/status",
-        "sampler_homing_gpio_port": 23,
+		"sampler_homing_gpio_port": 23,
+
     },
 }
+
 
 
 class PlatesSet:

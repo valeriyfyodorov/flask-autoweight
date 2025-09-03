@@ -22,14 +22,18 @@ def getPlatesNumbers(scalesName, weight=1000):
     plates = PlatesSet()
     if weight < 200:
         return plates
+    print(f" Read RTSP Front cam {time.strftime('%H:%M:%S')}")
     img_front = readRtspImage(
         SCALES[scalesName]["cam_front"]
     )
+    print(f" Recognize frontplate {time.strftime('%H:%M:%S')}")
     plates.front = recognizePlate(img_front)
+    print(f" Read RTSP Rear cam {time.strftime('%H:%M:%S')}")
     img_rear = readRtspImage(
         SCALES[scalesName]["cam_rear"]
     )
     time.sleep(0.1)
+    print(f" Recognize rearplate {time.strftime('%H:%M:%S')}")
     plates.rear = recognizePlate(img_rear)
     if len(plates.front) > 8:
         plates.front = plates.front[-6:]
@@ -39,16 +43,17 @@ def getPlatesNumbers(scalesName, weight=1000):
     # cv2.imwrite(TEMP_PLATE_IMG_FILE_FRONT,img_front)
     # cv2.imwrite(TEMP_PLATE_IMG_FILE_REAR,img_rear)
     time.sleep(0.1)
+    print(f" return plates {time.strftime('%H:%M:%S')}")
     return plates
 
 
-def getWeightKg(scalesName, check_sampler=False):
+def getWeightKg(scalesName):
     # modbus to measure weight
     result = readWeightFromModBus(scalesName)
     if result > 100 and CHECK_SAMPLER_HOMING:
-        # check if was delay caused by sampler position not at home (waiting in loop)
-        if check_sampler: delayedForSamplerCheck(scalesName)
-        result = readWeightFromModBus(scalesName)
+        # check if was delay caused by sampler position not at home
+        if (delayedForSamplerCheck(scalesName)):
+            result = readWeightFromModBus(scalesName)
     return result
 
 
@@ -89,7 +94,7 @@ def delayedForSamplerCheck(scalesName):
         sampler_port_occupied = GPIO.input(sampler_port)
         print("sampler_port_occupied = GPIO.input(sampler_port)",
               sampler_port_occupied)
-        result = sampler_port_occupied
+        result =  sampler_port_occupied
         while sampler_port_occupied:
             print('Waiting for sampler home port sensor, cannot use scales')
             time.sleep(1)

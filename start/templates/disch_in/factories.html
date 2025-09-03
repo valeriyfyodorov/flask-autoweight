@@ -60,7 +60,7 @@
       <table class="table table-striped text-center table-hover table-bordered">
         <thead>
           <tr>
-            <th> {{voc["factoryListHeaderText"] | safe}}</th>
+            <th>{{voc["factoryListHeaderText"] | safe}}</th>
           </tr>
         </thead>
         <tbody>
@@ -68,7 +68,7 @@
           <tr style="cursor:pointer">
             <td class="btn btn-block"
               onclick='window.location="{{url_for('plates') + query}}&fr={{factory['factoryID']}}";'>
-              {{factory["factoryName"]}}
+             <h4> {{factory["factoryName"]}}</h4>
             </td>
           </tr>
           {% endfor %}

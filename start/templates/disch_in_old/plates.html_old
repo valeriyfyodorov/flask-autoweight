@@ -1,0 +1,149 @@
+﻿{% extends "base.html" %}
+
+{% block styles %}
+<style type="text/css">
+
+.row {
+        padding-top: 50px;
+      }
+ .form-control::-webkit-input-placeholder {
+  color:lightyellow  !important;
+  
+  }
+  .form-control::placeholder {
+    color:lightyellow;
+    opacity: 1; /* Firefox */
+  }
+
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid text-center">
+  <!-- Main component container start -->
+  <div class=" extraspace" >
+    <div class="col-md-12">
+      <p></p>
+    </div>
+  </div>
+
+  <div class="row" >
+    <div class="col-md-12">
+            <h2>
+              {{voc["instructionText"] | safe}}
+
+            </h2>
+    </div>         
+  </div>
+
+  <div class=" extraspace" >
+    <div class="col-md-12">   
+          <img src="{{ url_for('static', filename='images/truckplates.jpg') }}" class="img-responsive" />
+     </div>          
+  </div>
+
+  <form method="post" action="{{action}}" id="form" >
+
+  <div class="row" >
+      <div class="col-sm-6 text-right d-flex justify-content-end">  
+            
+          <h5>
+            {{voc["frontPlateLabelText"] }}
+              </h5>
+              <input id="ptf" name="ptf" class="form-control" type="text" autofocus value="{{request.args.get('ptf')}}" onClick="this.setSelectionRange(0, this.value.length)"
+              placeholder="XX0000" style="width: 70%; font-size:4em; background-color: antiquewhite;">
+        
+            
+      </div>  
+      <div class="col-sm-6 text-left d-flex justify-content-start">   
+        
+         
+        <input id="ptr" name="ptr" class="form-control" type="text" value="{{request.args.get('ptr')}}" onClick="this.setSelectionRange(0, this.value.length)"
+        placeholder="X0000" style="width: 70%; font-size:4em; background-color: antiquewhite;">
+              <h5>
+                {{voc["rearPlateLabelText"] }}
+                  </h5>
+            
+        </div>   
+  </div>
+  <div class="row">
+    <div class="col-sm-12">
+      <p></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-6 offset-sm-3">
+      <button name="go" type="submit" value="go" id="go" class=" btn btn-lg btn-success btn-xl btn-block">
+        {{voc["goButtonText"]}}
+      </button>
+    </div>
+  </div>
+
+</form>
+  
+  
+
+      
+
+<div class="extraspace" >
+  <div class="col-md-12">
+    <p></p>
+  </div>
+</div>
+
+<div class="row" >
+  <div class="col-md-2 offset-md-5">
+    <a href="{{backUrl}}" class="btn btn-danger btn-lg btn-xl btn-block" role="button">
+            X
+        </a>     
+  </div>
+</div>
+
+
+        
+
+</div> <!-- /container -->
+
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  {% include 'idle_script.html' %}
+
+  <script>
+
+    $(function() {
+        $('#go').hide();
+        if ($('#ptf').val().length > 2
+                && $('#ptr').val().length > 2) {
+            $('#go').show();
+        }
+    });
+
+    $(".numbersonly").keypress(function (e) {
+    //if the letter is not digit then display error and don't type anything
+    if (e.which != 8 && e.which != 0 && (e.which < 48 || e.which > 57)) {
+    //display error message
+    // alert("Insert Only Numbers");
+    return false;
+    }
+    });
+
+    $('input[type="text"]').keyup(function(event) {
+        if ($('#ptf').val().length > 2
+                && $('#ptr').val().length > 2) {
+            $('#go').show();
+            if (event.keyCode === 13) {
+                event.preventDefault();
+                document.getElementById("go").click();
+            }
+            $(this).val($(this).val().toUpperCase());
+          } else
+          {
+            $('#go').hide();
+        }
+        $(this).val($(this).val().toUpperCase());
+    });
+  </script>
+{% endblock %}
