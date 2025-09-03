@@ -59,22 +59,25 @@ def getWeightKg(scalesName):
 
 def readWeightFromModBus(scalesName):
     c = ModbusClient()
-    c.host(SCALES[scalesName]["modbus"]["host"])
-    c.port(SCALES[scalesName]["modbus"]["port"])
-    if not c.is_open():
-        if not c.open():
+    print(f"reading weight from modbus {time.strftime('%H:%M:%S')}")
+    print(c)
+    print(f"host: {SCALES[scalesName]['modbus']['host']}")
+    c.host = (SCALES[scalesName]["modbus"]["host"])
+    c.port = (SCALES[scalesName]["modbus"]["port"])
+    if not c.is_open:
+        if not c.open:
             print(
                 f"unable to connect to modbus {SCALES[scalesName]['modbus']['host']} at port {SCALES[scalesName]['modbus']['port']}")
     str_weight = "0"
     result = 0
-    if c.is_open():
+    if c.is_open:
         regs = c.read_holding_registers(1, 2)
         # print(regs)
         if regs is not None:
             if len(regs) > 1:
                 print(f"regs[0]:{regs[0]}, regs[1]:{regs[1]}")
                 result = int(regs[0]) + 65536 * int(regs[1])
-    if c.is_open():
+    if c.is_open:
         c.close()  # close connection on every weight request
     if result == 0 and DEBUG_WITH_DUMMY_SCALES:
         if scalesName == "north":
@@ -94,7 +97,7 @@ def delayedForSamplerCheck(scalesName):
         sampler_port_occupied = GPIO.input(sampler_port)
         print("sampler_port_occupied = GPIO.input(sampler_port)",
               sampler_port_occupied)
-        result =  sampler_port_occupied
+        result = sampler_port_occupied
         while sampler_port_occupied:
             print('Waiting for sampler home port sensor, cannot use scales')
             time.sleep(1)

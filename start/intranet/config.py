@@ -1,4 +1,4 @@
-MAC_OS = False
+MAC_OS = True
 MAC_TEST_LOCATION = '/Users/Valera/Documents/venprojs/pi/latest/html/'
 
 if MAC_OS:
@@ -25,12 +25,9 @@ GPIO.output(GPIO_LAMP, False)
 CHECK_SAMPLER_HOMING = True
 
 
-
-#if CHECK_SAMPLER_HOMING:
+# if CHECK_SAMPLER_HOMING:
 #    GPIO.setup(23, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Button GPIO23  Rakoraf1 (Scales 1)
 #    GPIO.setup(24, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Button GPIO24  Rakoraf2 (Scales 2)
-
-
 
 
 # ls /dev/video* first for right camera device here, minus 1 means first working
@@ -51,11 +48,11 @@ TEMP_INVOICE_IMG_FILE = IMAGES_DIRECTORY + 'invoice.jpg'
 TEMP_PLATE_IMG_FILE_FRONT = IMAGES_DIRECTORY + 'front.jpg'
 TEMP_PLATE_IMG_FILE_REAR = IMAGES_DIRECTORY + 'rear.jpg'
 
-SERVER_URL="http://notscr.amgs.me/autoweight"
-SERVER_API_URL="http://notscr.amgs.me/apijson.ashx?key=gd3784h67hxgugb" 
+SERVER_URL = "http://notscr.amgs.me/autoweight"
+SERVER_API_URL = "http://notscr.amgs.me/apijson.ashx?key=gd3784h67hxgugb"
 
-#ALPR_API_TOKEN = 'Token 702d66a3f614a31139fefd757892acfb85771ee7'
-#ALPR_URL = 'https://api.platerecognizer.com/v1/plate-reader'
+# ALPR_API_TOKEN = 'Token 702d66a3f614a31139fefd757892acfb85771ee7'
+# ALPR_URL = 'https://api.platerecognizer.com/v1/plate-reader'
 
 ALPR_API_TOKEN = 'Token 702d66a3f614a31139fefd757892acfb85771ee7'
 ALPR_URL = 'http://192.168.100.5:8080/v1/plate-reader/'
@@ -97,7 +94,7 @@ SCALES = {
         "light_topic_front": "trafficlights/ts2ftl/status",
         "light_topic_rear": "trafficlights/ts2rtl/status",
         "sampler_homing_gpio_port": 24,
-        
+
     },
     "south":
     {
@@ -130,11 +127,10 @@ SCALES = {
         },
         "light_topic_front": "trafficlights/ts1ftl/status",
         "light_topic_rear": "trafficlights/ts1rtl/status",
-		"sampler_homing_gpio_port": 23,
+        "sampler_homing_gpio_port": 23,
 
     },
 }
-
 
 
 class PlatesSet:
