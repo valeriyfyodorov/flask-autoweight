@@ -1,5 +1,5 @@
 MAC_OS = True
-MAC_TEST_LOCATION = '/Users/Valera/Documents/venprojs/pi/latest/html/'
+MAC_TEST_LOCATION = "/Users/Valera/Documents/venprojs/pi/latest/html/"
 
 if MAC_OS:
     from . import GPIO
@@ -36,17 +36,17 @@ WEBCAM_BUFFER_SIZE = 5
 WEBCAM_COLD_START = False
 global video_capture
 
-IMAGES_DIRECTORY = '/var/www/html/'
+IMAGES_DIRECTORY = "/var/www/html/"
 if MAC_OS:
     IMAGES_DIRECTORY = MAC_TEST_LOCATION
 
-DUMMY_IMG_FRONT = IMAGES_DIRECTORY + 'dummy-front.jpg'
-DUMMY_IMG_REAR = IMAGES_DIRECTORY + 'dummy-rear.jpg'
-DUMMY_IMG_INVOICE = IMAGES_DIRECTORY + 'dummy-invoice.jpg'
-DUMMY_IMG_QR = IMAGES_DIRECTORY + 'dummy-qr.jpg'
-TEMP_INVOICE_IMG_FILE = IMAGES_DIRECTORY + 'invoice.jpg'
-TEMP_PLATE_IMG_FILE_FRONT = IMAGES_DIRECTORY + 'front.jpg'
-TEMP_PLATE_IMG_FILE_REAR = IMAGES_DIRECTORY + 'rear.jpg'
+DUMMY_IMG_FRONT = IMAGES_DIRECTORY + "dummy-front.jpg"
+DUMMY_IMG_REAR = IMAGES_DIRECTORY + "dummy-rear.jpg"
+DUMMY_IMG_INVOICE = IMAGES_DIRECTORY + "dummy-invoice.jpg"
+DUMMY_IMG_QR = IMAGES_DIRECTORY + "dummy-qr.jpg"
+TEMP_INVOICE_IMG_FILE = IMAGES_DIRECTORY + "invoice.jpg"
+TEMP_PLATE_IMG_FILE_FRONT = IMAGES_DIRECTORY + "front.jpg"
+TEMP_PLATE_IMG_FILE_REAR = IMAGES_DIRECTORY + "rear.jpg"
 
 SERVER_URL = "http://notscr.amgs.me/autoweight"
 SERVER_API_URL = "http://notscr.amgs.me/apijson.ashx?key=gd3784h67hxgugb"
@@ -54,81 +54,128 @@ SERVER_API_URL = "http://notscr.amgs.me/apijson.ashx?key=gd3784h67hxgugb"
 # ALPR_API_TOKEN = 'Token 702d66a3f614a31139fefd757892acfb85771ee7'
 # ALPR_URL = 'https://api.platerecognizer.com/v1/plate-reader'
 
-ALPR_API_TOKEN = 'Token 702d66a3f614a31139fefd757892acfb85771ee7'
-ALPR_URL = 'http://192.168.100.5:8080/v1/plate-reader/'
+ALPR_API_TOKEN = "Token 702d66a3f614a31139fefd757892acfb85771ee7"
+# ALPR_URL = 'http://192.168.100.5:8080/v1/plate-reader/'
+ALPR_URL = "http://192.168.21.34:5002/plate-reader/"
 
 
 SCALES_NAME_FOR_ID = {"2": "north", "1": "south"}
 TRAFFIC_LIGHT_API_URL = "http://192.168.21.82:8123/api/services/mqtt/publish"
 TRAFFIC_LIGHT_API_AUTH = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiIxYTQ2NjM1ZmI3NWU0NmI1YmIzMzU2NjkzYzViYzg4YyIsImlhdCI6MTYzODk2OTA1NCwiZXhwIjoxOTU0MzI5MDU0fQ.ib-WYqlTWzzLsM3PVCLLkS6_0bVIc5G8f1GI_YI3VUI"
+# SCALES = {
+#     "north": {
+#         "id": 2,
+#         "cam_front": {
+#             "url": "rtsp://192.168.120.183:554/video2",
+#             "crop_ratio": [0.001, 0.999, 0.001, 0.999],
+#             "warp_from": [[400, 400], [500, 400], [500, 500], [400, 500]],
+#             "warp_to": [[400, 400], [500, 400], [500, 500], [400, 500]],
+#         },
+#         "cam_rear": {
+#             "url": "rtsp://192.168.120.184:554/video2",
+#             "crop_ratio": [0.001, 0.999, 0.001, 0.999],
+#             "warp_from": [[400, 400], [500, 400], [500, 500], [400, 500]],
+#             "warp_to": [[400, 400], [500, 400], [500, 500], [400, 500]],
+#         },
+#         "cam_top": {
+#             "url": "rtsp://192.168.120.185:554/media/video2",
+#             "crop_ratio": [0.1, 0.9, 0.1, 0.9],
+#             "warp_from": [[528, 332], [528, 355], [631, 354], [631, 332]],
+#             "warp_to": [[528, 332], [528, 355], [631, 354], [631, 332]],
+#         },
+#         "modbus": {
+#             "host": "192.168.130.124",
+#             "port": 505,
+#         },
+#         "light_topic_front": "trafficlights/ts2ftl/status",
+#         "light_topic_rear": "trafficlights/ts2rtl/status",
+#         "sampler_homing_gpio_port": 24,
+#     },
+#     "south": {
+#         "id": 1,
+#         "cam_front": {
+#             "url": "rtsp://192.168.120.180:554/video2",
+#             "crop_ratio": [0.001, 0.999, 0.001, 0.999],
+#             "warp_from": [[400, 400], [500, 400], [500, 500], [400, 500]],
+#             "warp_to": [[400, 400], [500, 400], [500, 500], [400, 500]],
+#         },
+#         "cam_rear": {
+#             "url": "rtsp://192.168.120.181:554/video2",
+#             "crop_ratio": [0.001, 0.999, 0.001, 0.999],
+#             "warp_from": [[400, 400], [500, 400], [500, 500], [400, 500]],
+#             "warp_to": [[400, 400], [500, 400], [500, 500], [400, 500]],
+#         },
+#         "cam_top": {
+#             "url": "rtsp://192.168.120.182:554/media/video2",
+#             "crop_ratio": [0.1, 0.9, 0.1, 0.9],
+#             "warp_from": [[528, 332], [528, 355], [631, 354], [631, 332]],
+#             "warp_to": [[528, 332], [528, 355], [631, 354], [631, 332]],
+#         },
+#         "modbus": {
+#             "host": "192.168.130.124",
+#             "port": 504,
+#         },
+#         "light_topic_front": "trafficlights/ts1ftl/status",
+#         "light_topic_rear": "trafficlights/ts1rtl/status",
+#         "sampler_homing_gpio_port": 23,
+#     },
+# }
 SCALES = {
-    "north":
-    {
+    "north": {
         "id": 2,
-        "cam_front":
-        {
+        "cam_front": {
             "url": "rtsp://192.168.120.183:554/video2",
             "crop_ratio": [0.001, 0.999, 0.001, 0.999],
             "warp_from": [[400, 400], [500, 400], [500, 500], [400, 500]],
             "warp_to": [[400, 400], [500, 400], [500, 500], [400, 500]],
         },
-        "cam_rear":
-        {
+        "cam_rear": {
             "url": "rtsp://192.168.120.184:554/video2",
             "crop_ratio": [0.001, 0.999, 0.001, 0.999],
             "warp_from": [[400, 400], [500, 400], [500, 500], [400, 500]],
             "warp_to": [[400, 400], [500, 400], [500, 500], [400, 500]],
         },
-        "cam_top":
-        {
+        "cam_top": {
             "url": "rtsp://192.168.120.185:554/media/video2",
             "crop_ratio": [0.1, 0.9, 0.1, 0.9],
             "warp_from": [[528, 332], [528, 355], [631, 354], [631, 332]],
             "warp_to": [[528, 332], [528, 355], [631, 354], [631, 332]],
         },
-        "modbus":
-        {
+        "modbus": {
             "host": "192.168.130.124",
             "port": 505,
         },
         "light_topic_front": "trafficlights/ts2ftl/status",
         "light_topic_rear": "trafficlights/ts2rtl/status",
         "sampler_homing_gpio_port": 24,
-
     },
-    "south":
-    {
+    "south": {
         "id": 1,
-        "cam_front":
-        {
+        "cam_front": {
             "url": "rtsp://192.168.120.180:554/video2",
             "crop_ratio": [0.001, 0.999, 0.001, 0.999],
             "warp_from": [[400, 400], [500, 400], [500, 500], [400, 500]],
             "warp_to": [[400, 400], [500, 400], [500, 500], [400, 500]],
         },
-        "cam_rear":
-        {
+        "cam_rear": {
             "url": "rtsp://192.168.120.181:554/video2",
             "crop_ratio": [0.001, 0.999, 0.001, 0.999],
             "warp_from": [[400, 400], [500, 400], [500, 500], [400, 500]],
             "warp_to": [[400, 400], [500, 400], [500, 500], [400, 500]],
         },
-        "cam_top":
-        {
+        "cam_top": {
             "url": "rtsp://192.168.120.182:554/media/video2",
             "crop_ratio": [0.1, 0.9, 0.1, 0.9],
             "warp_from": [[528, 332], [528, 355], [631, 354], [631, 332]],
             "warp_to": [[528, 332], [528, 355], [631, 354], [631, 332]],
         },
-        "modbus":
-        {
+        "modbus": {
             "host": "192.168.130.124",
             "port": 504,
         },
         "light_topic_front": "trafficlights/ts1ftl/status",
         "light_topic_rear": "trafficlights/ts1rtl/status",
         "sampler_homing_gpio_port": 23,
-
     },
 }
 
