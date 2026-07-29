@@ -49,19 +49,18 @@
 
   <div class="row">
     {% for factoriesPart in factories %}
-    <div class="col-sm-4">
+    <div class="col-sm-6">
       <table class="table table-striped text-center table-hover table-bordered">
-        <thead>
+        <!-- <thead>
           <tr>
             <th>{{voc["factoryListHeaderText"] | safe}}</th>
           </tr>
-        </thead>
+        </thead> -->
         <tbody>
           {% for factory in factoriesPart %}
           <tr style="cursor:pointer">
-            <td class="btn btn-block"
-              onclick='window.location="{{url_for('plates') + query}}&fr={{factory['factoryID']}}";'>
-             <h4> {{factory["factoryName"]}}</h4>
+            <td class="btn btn-block" onclick="window.location='{{platesUrl}}&fr={{factory.factoryID}}';">
+              <h3> {{factory["factoryName"]}}</h3>
             </td>
           </tr>
           {% endfor %}
@@ -71,7 +70,7 @@
     {% endfor %}
   </div>
 
-  {% include 'disch_in/_letter_nav.html' %}
+
 
 
   <div class="row">

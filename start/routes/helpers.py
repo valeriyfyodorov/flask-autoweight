@@ -7,11 +7,16 @@ from socket import timeout
 from io import BytesIO
 from PIL import Image
 from urllib.parse import urlencode as encode
-from start.intranet.config import TRAFFIC_LIGHT_API_URL, TRAFFIC_LIGHT_API_AUTH, SCALES_NAME_FOR_ID, SCALES
+from start.intranet.config import (
+    TRAFFIC_LIGHT_API_URL,
+    TRAFFIC_LIGHT_API_AUTH,
+    SCALES_NAME_FOR_ID,
+    SCALES,
+)
 
 
 def dateFromJson(jsonStr):
-    return datetime.strptime(jsonStr, '%Y-%m-%dT%H:%M:%S')
+    return datetime.strptime(jsonStr, "%Y-%m-%dT%H:%M:%S")
 
 
 def defaultEn(lng, dictionary):
@@ -45,34 +50,31 @@ def jsonDictFromUrl(api_url):
                     result = json.loads(source)
                 else:
                     print(
-                        'jsonDictFromUrl. When trying to read data from server API zero length response received')
+                        "jsonDictFromUrl. When trying to read data from server API zero length response received"
+                    )
             else:
                 print(
-                    'jsonDictFromUrl. An error occurred while attempting to retrieve lists data from the API.')
+                    "jsonDictFromUrl. An error occurred while attempting to retrieve lists data from the API."
+                )
     except timeout:
-        print(
-            'jsonDictFromUrl. Timeout error when trying API call'
-        )
+        print("jsonDictFromUrl. Timeout error when trying API call")
     return result
 
 
-def splitDictInto3(dictionary, extraDict=None):
-    dict1 = []
-    dict2 = []
-    dict3 = []
-    if extraDict is not None:
-        dictionary.append(extraDict)
-    if len(dictionary) < 1:
-        return dict1, dict2, dict3
-    elif len(dictionary) == 1:
-        return dictionary, dict2, dict3
-    elif len(dictionary) == 2:
-        return dictionary[0:1], dictionary[1:], dict3
-    divResult = int(len(dictionary) / 3)
-    return dictionary[0:divResult], dictionary[divResult: divResult * 2], dictionary[divResult * 2:]
+def splitDictInto2(dictionary):
+    """Cut a list of rows into the two columns of the factories page."""
+    # rounding up, so that an odd row goes to the left column - the driver reads
+    # the left column top to bottom first
+    divResult = (len(dictionary) + 1) // 2
+    return dictionary[0:divResult], dictionary[divResult:]
 
 
 ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+# the bucket for names that sort before "A": digits, punctuation, anything not A-Z.
+# It is a key of the grouped dict and the "letter" argument value of its own button,
+# so it must stay a plain word - a "#" in a url would start a fragment.
+NON_LETTER_KEY = "OTHER"
 
 
 def firstLetterOf(name):
@@ -91,28 +93,40 @@ def firstLetterOf(name):
     return letter if letter in ALPHABET else ""
 
 
+def letterFromArg(letterArg, default="A"):
+    """Return the group key the page's "letter" argument asks for.
+
+    Anything that is neither one letter of the alphabet nor the non-letter bucket -
+    including no argument at all, which is the first page load - gives the default.
+    """
+    letterArg = (letterArg or "").upper()
+    if letterArg == NON_LETTER_KEY or (len(letterArg) == 1 and letterArg in ALPHABET):
+        return letterArg
+    return default
+
+
 def groupByFirstLetter(rows, nameKey):
     """Group API rows into a dict with one entry per letter: {"A": [...], "B": [...], ...}.
 
     All 26 letters are always present, an empty list means no rows for that letter -
     the page uses that to grey out the letter buttons a driver cannot press.
-    Rows starting with a digit or any other non-letter are not grouped, they stay
-    visible only in the "show all" view.
+    Rows starting with a digit or any other non-letter go under NON_LETTER_KEY,
+    the bucket behind the "123#!" button.
     """
     grouped = {letter: [] for letter in ALPHABET}
+    grouped[NON_LETTER_KEY] = []
     for row in rows:
         letter = firstLetterOf(row.get(nameKey))
-        if letter:
-            grouped[letter].append(row)
+        grouped[letter or NON_LETTER_KEY].append(row)
     return grouped
 
 
 def servePILimageAsPNG(img):
     file_object = BytesIO()
     # img.save(file_object, 'JPEG', quality=70) for jpg
-    img.save(file_object, 'PNG')
+    img.save(file_object, "PNG")
     file_object.seek(0)
-    return send_file(file_object, mimetype='image/PNG')
+    return send_file(file_object, mimetype="image/PNG")
 
 
 def switchTrafficLight(scaleId, payload="green", topic="light_topic_front"):
@@ -120,10 +134,10 @@ def switchTrafficLight(scaleId, payload="green", topic="light_topic_front"):
     scale = SCALES[SCALES_NAME_FOR_ID[scaleId]]
     body = {"payload": payload, "topic": scale[topic]}
     req = urequest.Request(TRAFFIC_LIGHT_API_URL)
-    req.add_header('Content-Type', 'application/json; charset=utf-8')
-    req.add_header('Authorization', TRAFFIC_LIGHT_API_AUTH)
-    jsondataasbytes = json.dumps(body).encode('utf-8')
-    req.add_header('Content-Length', len(jsondataasbytes))
+    req.add_header("Content-Type", "application/json; charset=utf-8")
+    req.add_header("Authorization", TRAFFIC_LIGHT_API_AUTH)
+    jsondataasbytes = json.dumps(body).encode("utf-8")
+    req.add_header("Content-Length", len(jsondataasbytes))
     try:
         with urequest.urlopen(req, jsondataasbytes) as response:
             if response.getcode() == 200:
@@ -132,14 +146,14 @@ def switchTrafficLight(scaleId, payload="green", topic="light_topic_front"):
                     result = json.loads(source)
                 else:
                     print(
-                        'switchTrafficLight. When trying to read data from server API zero length response received')
+                        "switchTrafficLight. When trying to read data from server API zero length response received"
+                    )
             else:
                 print(
-                    'switchTrafficLight. An error occurred while attempting to retrieve lists data from the API.')
+                    "switchTrafficLight. An error occurred while attempting to retrieve lists data from the API."
+                )
     except timeout:
-        print(
-            'switchTrafficLight. Timeout error when trying API call'
-        )
+        print("switchTrafficLight. Timeout error when trying API call")
     return result
 
 
