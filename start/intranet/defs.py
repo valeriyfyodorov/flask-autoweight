@@ -5,13 +5,20 @@ from shutil import copyfile
 import cv2
 from .utils import Timer, archiveFileName, dictFromArgs
 from .config import (
-    PlatesSet, SCALES,
-    DEBUG_WITH_DUMMY_SCALES, SCALES_NAME_FOR_ID,
-    IMAGES_DIRECTORY, TEMP_INVOICE_IMG_FILE,
-    TEMP_PLATE_IMG_FILE_FRONT, TEMP_PLATE_IMG_FILE_REAR, CHECK_SAMPLER_HOMING, MAC_OS
+    PlatesSet,
+    SCALES,
+    DEBUG_WITH_DUMMY_SCALES,
+    SCALES_NAME_FOR_ID,
+    IMAGES_DIRECTORY,
+    TEMP_INVOICE_IMG_FILE,
+    TEMP_PLATE_IMG_FILE_FRONT,
+    TEMP_PLATE_IMG_FILE_REAR,
+    CHECK_SAMPLER_HOMING,
+    MAC_OS,
 )
 from .vision import recognizePlate, readRtspImage
 from .picam import captureInvoiceToFile
+
 if MAC_OS:
     from . import GPIO
 else:
@@ -23,15 +30,11 @@ def getPlatesNumbers(scalesName, weight=1000):
     if weight < 200:
         return plates
     print(f" Read RTSP Front cam {time.strftime('%H:%M:%S')}")
-    img_front = readRtspImage(
-        SCALES[scalesName]["cam_front"]
-    )
+    img_front = readRtspImage(SCALES[scalesName]["cam_front"])
     print(f" Recognize frontplate {time.strftime('%H:%M:%S')}")
     plates.front = recognizePlate(img_front)
     print(f" Read RTSP Rear cam {time.strftime('%H:%M:%S')}")
-    img_rear = readRtspImage(
-        SCALES[scalesName]["cam_rear"]
-    )
+    img_rear = readRtspImage(SCALES[scalesName]["cam_rear"])
     time.sleep(0.1)
     print(f" Recognize rearplate {time.strftime('%H:%M:%S')}")
     plates.rear = recognizePlate(img_rear)
@@ -50,9 +53,9 @@ def getPlatesNumbers(scalesName, weight=1000):
 def getWeightKg(scalesName):
     # modbus to measure weight
     result = readWeightFromModBus(scalesName)
-    if result > 100 and CHECK_SAMPLER_HOMING:
+    if result > 2000 and CHECK_SAMPLER_HOMING:
         # check if was delay caused by sampler position not at home
-        if (delayedForSamplerCheck(scalesName)):
+        if delayedForSamplerCheck(scalesName):
             result = readWeightFromModBus(scalesName)
     return result
 
@@ -64,7 +67,8 @@ def readWeightFromModBus(scalesName):
     if not c.is_open():
         if not c.open():
             print(
-                f"unable to connect to modbus {SCALES[scalesName]['modbus']['host']} at port {SCALES[scalesName]['modbus']['port']}")
+                f"unable to connect to modbus {SCALES[scalesName]['modbus']['host']} at port {SCALES[scalesName]['modbus']['port']}"
+            )
     str_weight = "0"
     result = 0
     if c.is_open():
@@ -87,16 +91,15 @@ def readWeightFromModBus(scalesName):
 def delayedForSamplerCheck(scalesName):
     result = False
     print("Check of sampler readiness is enabled:", CHECK_SAMPLER_HOMING)
-    sampler_port = SCALES[scalesName]['sampler_homing_gpio_port']
-    print('Checking sampler GPIO port ', sampler_port)
+    sampler_port = SCALES[scalesName]["sampler_homing_gpio_port"]
+    print("Checking sampler GPIO port ", sampler_port)
     try:
         GPIO.setup(sampler_port, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         sampler_port_occupied = GPIO.input(sampler_port)
-        print("sampler_port_occupied = GPIO.input(sampler_port)",
-              sampler_port_occupied)
-        result =  sampler_port_occupied
+        print("sampler_port_occupied = GPIO.input(sampler_port)", sampler_port_occupied)
+        result = sampler_port_occupied
         while sampler_port_occupied:
-            print('Waiting for sampler home port sensor, cannot use scales')
+            print("Waiting for sampler home port sensor, cannot use scales")
             time.sleep(1)
             sampler_port_occupied = GPIO.input(sampler_port)
     except:
@@ -120,20 +123,14 @@ def readInvoice():
 def archivePlates(car_id, args):
     queryDict = dictFromArgs(args)
     wkg = str(queryDict["wkg"])
-    ptf = str(queryDict["ptf"]).replace('/', '-').replace('\\', '-')
-    ptr = str(queryDict["ptr"]).replace('/', '-').replace('\\', '-')
+    ptf = str(queryDict["ptf"]).replace("/", "-").replace("\\", "-")
+    ptr = str(queryDict["ptr"]).replace("/", "-").replace("\\", "-")
     sc = str(queryDict["sc"]).strip()
     scalesName = SCALES_NAME_FOR_ID[sc]
-    img_front = readRtspImage(
-        SCALES[scalesName]["cam_front"]
-    )
-    img_rear = readRtspImage(
-        SCALES[scalesName]["cam_rear"]
-    )
-    cv2.imwrite(archiveFileName(IMAGES_DIRECTORY,
-                                f"_{car_id}_({wkg}-F-{ptf}).jpg"), img_front)
-    cv2.imwrite(archiveFileName(IMAGES_DIRECTORY,
-                                f"_{car_id}_({wkg}-R-{ptr}).jpg"), img_rear)
+    img_front = readRtspImage(SCALES[scalesName]["cam_front"])
+    img_rear = readRtspImage(SCALES[scalesName]["cam_rear"])
+    cv2.imwrite(archiveFileName(IMAGES_DIRECTORY, f"_{car_id}_({wkg}-F-{ptf}).jpg"), img_front)
+    cv2.imwrite(archiveFileName(IMAGES_DIRECTORY, f"_{car_id}_({wkg}-R-{ptr}).jpg"), img_rear)
     cv2.imwrite(TEMP_PLATE_IMG_FILE_FRONT, img_front)
     cv2.imwrite(TEMP_PLATE_IMG_FILE_REAR, img_rear)
 
@@ -141,17 +138,16 @@ def archivePlates(car_id, args):
 def archiveInvoice(car_id, args, invoiceNr):
     # queryDict = dictFromArgs(args)
     # wkg = str(queryDict["wkg"])
-    copyfile(TEMP_INVOICE_IMG_FILE, archiveFileName(
-        IMAGES_DIRECTORY, f"_{car_id}.jpg", saveTime=False))
+    copyfile(
+        TEMP_INVOICE_IMG_FILE, archiveFileName(IMAGES_DIRECTORY, f"_{car_id}.jpg", saveTime=False)
+    )
 
 
 def archiveCargoImage(cargoId, args):
     queryDict = dictFromArgs(args)
     sc = str(queryDict["sc"]).strip()
     scalesName = SCALES_NAME_FOR_ID[sc]
-    img_top = readRtspImage(
-        SCALES[scalesName]["cam_top"]
-    )
+    img_top = readRtspImage(SCALES[scalesName]["cam_top"])
     destination_dir = IMAGES_DIRECTORY + f"/{cargoId}/"
     os.makedirs(destination_dir, exist_ok=True)
     file_path = destination_dir + time.strftime("%y_%m_%d_%H_%M_%S") + ".jpg"

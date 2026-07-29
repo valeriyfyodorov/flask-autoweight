@@ -20,7 +20,9 @@ the two recognised plate numbers and taps their own.
 
 **Incoming (delivery).** The driver holds the invoice or CMR under the scanner box and the terminal
 photographs it. Then they pick their client from today's delivery lists, pick the farm or shipper
-the cargo came from, confirm the licence plates that the cameras read (correcting them if the
+the cargo came from — there are a couple of hundred of them, so the page offers a row of A-Z
+buttons and shows only the farms starting with the letter tapped, with a "Cits..Другой..Other"
+button for the ones not on the list — confirm the licence plates that the cameras read (correcting them if the
 recognition was wrong), and enter the invoice number and declared weight. The terminal registers the
 truck in the central system and prints driving instructions with a QR code and a map of where to
 unload. The traffic lights in front of the scales turn green.

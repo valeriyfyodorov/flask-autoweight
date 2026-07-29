@@ -47,7 +47,8 @@ Assistant MQTT endpoint, and prints a weighing receipt.
 **Nearly all state between pages lives in the query string.** There is no Flask session and no
 per-request server-side store. Keys in circulation: `lng` (language), `dir` (direction), `sc` (scale
 id, `1`=south `2`=north), `ptf`/`ptr` (front/rear plate), `wkg` (weight in kg), `tranunit`
-(transport unit id), `list`, `fr`, `ifn`, `inr`/`iwt` (invoice nr / weight), `local`.
+(transport unit id), `list`, `fr`, `ifn`, `inr`/`iwt` (invoice nr / weight), `local`,
+`letter` (A-Z filter, `/factories` only — it is stripped before linking on to `/plates`).
 
 Use `helpers.queryfromArgs(request.args, excludeKeysList=[...])` to rebuild the query string. Do not
 hand-assemble one.
@@ -91,6 +92,12 @@ Consequences an agent must respect:
   complete safety net. `printing.py:printout` already wraps its calls in a retry loop for this
   reason. Note it catches `socket.error`, which does not cover the JSON or HTTP cases above.
 - **Errors surface as redirects**, not exceptions: `redirect(url_for('unknownerror') + f"?error=…")`.
+- **`command=listfactories` accepts `greaterthan=`/`lessthan=` letter bounds — do not rely on them.**
+  Measured against the live API they drop rows: `greaterthan=a&lessthan=b` returns nothing although
+  18 factories start with "A", and `greaterthan=i` skips the "I" ones. `/factories` therefore fetches
+  the whole list in one call and groups it locally with `helpers.groupByFirstLetter`.
+- **Factory names arrive with a leading space** (`" Abra, LPKS"`) and may start with a Latvian letter
+  (Š, Ģ, Ķ). `helpers.firstLetterOf` trims and folds the accent so they file under S/G/K.
 - Templates are the only place formatting lives; route functions build a `content` dict and hand it
   over.
 

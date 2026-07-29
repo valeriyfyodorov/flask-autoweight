@@ -1,0 +1,22 @@
+{# Alphabet filter bar for the factories page.
+   Included twice (above and below the factory tables) so the driver never has to
+   scroll to change the letter. Everything it needs - urls, active state and which
+   letters have factories - is prepared in the factories() route. #}
+<div class="row">
+  <div class="col-md-12">
+    <div class="d-flex flex-wrap justify-content-center">
+      {% for item in letterData %}
+      {% if item["enabled"] %}
+      <a class="btn btn-lg btn-outline-secondary letter-btn {{item['state']}}" href="{{item['url']}}"
+        role="button">{{item["letter"]}}</a>
+      {% else %}
+      {# no factories under this letter: keep its place, but do not let it be pressed #}
+      <span class="btn btn-lg btn-outline-secondary letter-btn disabled">{{item["letter"]}}</span>
+      {% endif %}
+      {% endfor %}
+      <a class="btn btn-lg btn-secondary letter-btn letter-btn-other" href="{{otherUrl}}" role="button">
+        Cits..Другой..Other
+      </a>
+    </div>
+  </div>
+</div>

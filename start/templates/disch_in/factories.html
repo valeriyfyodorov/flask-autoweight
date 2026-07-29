@@ -6,6 +6,19 @@
     padding-top: 20px;
   }
 
+  /* alphabet filter buttons: same width for every letter, so the bar stays an
+     even grid and a letter always keeps its place on the screen */
+  .letter-btn {
+    min-width: 3.2rem;
+    margin: 0.15rem;
+    font-size: 1.4rem;
+    font-weight: bold;
+  }
+
+  .letter-btn-other {
+    min-width: 14rem;
+  }
+
   /* .table td,
   .table th {
     padding: 0.2rem;
@@ -32,27 +45,7 @@
     </div>
   </div>
 
-  <div class="row">
-    <div class="col-md-12">
-      <ul class="nav nav-pills nav-justified large">
-        <li class="nav-item">
-          <h3>
-            <a class="nav-link {{blockData['0']['state']}}" href="{{blockData['0']['url']}}">A - H</a>
-          </h3>
-        </li>
-        <li class="nav-item">
-          <h3>
-            <a class="nav-link {{blockData['1']['state']}}" href="{{blockData['1']['url']}}">I - O</a>
-          </h3>
-        </li>
-        <li class="nav-item">
-          <h3>
-            <a class="nav-link {{blockData['2']['state']}}" href="{{blockData['2']['url']}}">P - Z ...</a>
-          </h3>
-        </li>
-      </ul>
-    </div>
-  </div>
+  {% include 'disch_in/_letter_nav.html' %}
 
   <div class="row">
     {% for factoriesPart in factories %}
@@ -78,27 +71,7 @@
     {% endfor %}
   </div>
 
-  <div class="row">
-    <div class="col-md-12">
-      <ul class="nav nav-pills nav-tab nav-justified large">
-        <li class="nav-item">
-          <h3>
-            <a class="nav-link {{blockData['0']['state']}}" href="{{blockData['0']['url']}}">A - H</a>
-          </h3>
-        </li>
-        <li class="nav-item">
-          <h3>
-            <a class="nav-link {{blockData['1']['state']}}" href="{{blockData['1']['url']}}">I - O </a>
-          </h3>
-        </li>
-        <li class="nav-item">
-          <h3>
-            <a class="nav-link {{blockData['2']['state']}}" href="{{blockData['2']['url']}}">P - Z ...</a>
-          </h3>
-        </li>
-      </ul>
-    </div>
-  </div>
+  {% include 'disch_in/_letter_nav.html' %}
 
 
   <div class="row">

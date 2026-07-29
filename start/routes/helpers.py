@@ -1,6 +1,7 @@
 from datetime import datetime
 from flask import send_file
 import json
+import unicodedata
 import urllib.request as urequest
 from socket import timeout
 from io import BytesIO
@@ -69,6 +70,41 @@ def splitDictInto3(dictionary, extraDict=None):
         return dictionary[0:1], dictionary[1:], dict3
     divResult = int(len(dictionary) / 3)
     return dictionary[0:divResult], dictionary[divResult: divResult * 2], dictionary[divResult * 2:]
+
+
+ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+def firstLetterOf(name):
+    """Return the A-Z letter a name should be filed under, or "" if it has none.
+
+    Names coming from the API often have a leading space (" Abra, LPKS") and may
+    start with a Latvian letter (Š, Ģ, Ķ). We trim the name and strip the accent
+    marks, so that "Šķibe" is filed under "S" - which is where a driver looks for it.
+    """
+    name = (name or "").strip()
+    if len(name) < 1:
+        return ""
+    # NFD splits an accented letter into base letter + combining mark, then we
+    # drop the marks and keep the plain base letter.
+    letter = unicodedata.normalize("NFD", name[0])[0].upper()
+    return letter if letter in ALPHABET else ""
+
+
+def groupByFirstLetter(rows, nameKey):
+    """Group API rows into a dict with one entry per letter: {"A": [...], "B": [...], ...}.
+
+    All 26 letters are always present, an empty list means no rows for that letter -
+    the page uses that to grey out the letter buttons a driver cannot press.
+    Rows starting with a digit or any other non-letter are not grouped, they stay
+    visible only in the "show all" view.
+    """
+    grouped = {letter: [] for letter in ALPHABET}
+    for row in rows:
+        letter = firstLetterOf(row.get(nameKey))
+        if letter:
+            grouped[letter].append(row)
+    return grouped
 
 
 def servePILimageAsPNG(img):

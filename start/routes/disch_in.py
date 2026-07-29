@@ -3,7 +3,10 @@ import time
 from start import app
 from flask import render_template, request, url_for, redirect
 from .settings import vocabulary
-from .helpers import defaultEn, queryfromArgs, jsonDictFromUrl, splitDictInto3, switchBothTrafficLight
+from .helpers import (
+    defaultEn, queryfromArgs, jsonDictFromUrl, splitDictInto3,
+    switchBothTrafficLight, groupByFirstLetter, ALPHABET
+)
 from start.intranet.defs import (
     readInvoice, archivePlates, archiveInvoice, archiveCargoImage
 )
@@ -46,56 +49,61 @@ def lists():
 
 @app.route('/factories')
 def factories():
+    """Show the farms/ shippers of the chosen list, filtered by one letter A-Z.
+
+    The whole list is fetched from the API in a single call and grouped by the
+    first letter here, so that the page can tell which letter buttons have
+    factories behind them. Without a "letter" argument every factory is shown.
+    """
     print(f"entering factories def {time.strftime('%H:%M:%S')}")
     lng = defaultEn(request.args.get('lng'), vocabulary)
     voc = vocabulary[lng]["factories"]
     shippersList = request.args.get('list')
-    blockSelected = request.args.get('block')
-    blockUrlStart = request.base_url + \
-        queryfromArgs(request.args, excludeKeysList=["block"])
-    blockData = {
-        "0":
-        {
-            "url": blockUrlStart,
-            "state": "active",
-        },
-        "1":
-        {
-            "url": blockUrlStart + "&block=1",
-            "state": "",
-        },
-        "2":
-        {
-            "url": blockUrlStart + "&block=2",
-            "state": "",
-        },
-    }
-    query = queryfromArgs(request.args) + f"&list={shippersList}"
-    # get one list from api
+    letterSelected = (request.args.get('letter') or "").upper()
+    if len(letterSelected) != 1 or letterSelected not in ALPHABET:
+        # anything that is not one letter of the alphabet means "show them all"
+        letterSelected = ""
+    # the letter is a filter of this page only, it must not travel to the next pages
+    # ("list" is already in the arguments, no need to add it again)
+    query = queryfromArgs(request.args, excludeKeysList=["letter"])
+    # get one list from api, unfiltered - the API letter filters are not reliable
     api_url = app.config['DB_SERVER_API_URL'] + \
         f"&command=listfactories&list={shippersList}"
-    extraDict = {"factoryID": 0, "factoryName": "Cits..Другой..Other"}
-    if (blockSelected == "1"):
-        api_url += f"&greaterthan=i&lessthan=p"
-        blockData["0"]["state"] = ""
-        blockData["1"]["state"] = "active"
-    if (blockSelected == "2"):
-        api_url += f"&greaterthan=p"
-        blockData["0"]["state"] = ""
-        blockData["2"]["state"] = "active"
-    else:
-        api_url += f"&lessthan=i"
-        extraDict = None
     print(
         f"loading factories list from api {api_url} {time.strftime('%H:%M:%S')}")
-    factories = list(splitDictInto3(
-        jsonDictFromUrl(api_url), extraDict=extraDict))
+    allFactories = jsonDictFromUrl(api_url)
+    # on any API trouble jsonDictFromUrl gives back an error dict instead of a list
+    if not isinstance(allFactories, list) or len(allFactories) == 0:
+        return redirect(url_for('unknownerror') + query)
+    groupedFactories = groupByFirstLetter(allFactories, "factoryName")
+    # every letter button is the same page url with just the letter changed
+    letterUrlStart = request.base_url + \
+        queryfromArgs(request.args, excludeKeysList=["letter"])
+    separator = "&" if "?" in letterUrlStart else "?"
+    # first button shows everything, then one button per letter of the alphabet
+    letterData = [{
+        "letter": "A-Z",
+        "url": letterUrlStart,
+        "state": "" if letterSelected else "active",
+        "enabled": True,
+    }]
+    for letter in ALPHABET:
+        letterData.append({
+            "letter": letter,
+            "url": letterUrlStart + separator + f"letter={letter}",
+            "state": "active" if letter == letterSelected else "",
+            "enabled": len(groupedFactories[letter]) > 0,
+        })
+    chosenFactories = groupedFactories.get(letterSelected, allFactories)
+    factories = list(splitDictInto3(chosenFactories))
+    # factory number 0 means "not in the list", it is always offered as a button
+    otherUrl = url_for('plates') + query + "&fr=0"
     print(f"loading factories page {time.strftime('%H:%M:%S')}")
     return render_template(
         'disch_in/factories.html', title='Choose your farm/ shipper',
         voc=voc,
         query=query, factories=factories,
-        blockData=blockData,
+        letterData=letterData, otherUrl=otherUrl,
     )
 
 
