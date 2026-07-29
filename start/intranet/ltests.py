@@ -8,7 +8,7 @@ import cv2  # run opencv_install.sh to install
 # from picamera import PiCamera
 from PIL import Image
 from random import randint
-import zxingcpp as zbarlight
+import zbarlight
 from pyModbusTCP.client import ModbusClient
 
 MAC_TEST_LOCATION = '/Users/Valera/Documents/venprojs/pi/latest/html/'
@@ -272,21 +272,21 @@ def getWeightKg(scalesName):
     host = "192.168.21.200"
     port = 505
     port = 502
-    c.host = (host)
-    c.port = (port)
-    if not c.is_open:
-        if not c.open:
+    c.host(host)
+    c.port(port)
+    if not c.is_open():
+        if not c.open():
             print(
                 f"unable to connect to modbus {SCALES[scalesName]['modbus']['host']} at port {SCALES[scalesName]['modbus']['port']}")
     str_weight = "0"
-    if c.is_open:
+    if c.is_open():
         regs = c.read_holding_registers(1, 2)
         regs = c.read_holding_registers(555, 2)
         print(regs)
         if regs is not None:
             if len(regs) > 0:
                 str_weight = regs[0]
-    if c.is_open:
+    if c.is_open():
         c.close()  # close connection on every weight request
     result = int(str_weight)
     return result

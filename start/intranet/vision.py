@@ -3,7 +3,7 @@ import re
 import requests
 import numpy as np
 import cv2  # run opencv_install.sh to install
-import zxingcpp as zbarlight
+import zbarlight
 from .utils import Timer
 from .config import (
     ALPR_API_TOKEN, ALPR_URL,
