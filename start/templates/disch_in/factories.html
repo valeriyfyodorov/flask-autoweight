@@ -9,9 +9,9 @@
   /* alphabet filter buttons: same width for every letter, so the bar stays an
      even grid and a letter always keeps its place on the screen */
   .letter-btn {
-    min-width: 3.2rem;
-    margin: 0.15rem;
-    font-size: 1.4rem;
+    min-width: 3.4rem;
+    margin: 0.45rem;
+    font-size: 2.3rem;
     font-weight: bold;
   }
 
@@ -60,7 +60,7 @@
           {% for factory in factoriesPart %}
           <tr style="cursor:pointer">
             <td class="btn btn-block" onclick="window.location='{{platesUrl}}&fr={{factory.factoryID}}';">
-              <h3> {{factory["factoryName"]}}</h3>
+              <h1> {{factory["factoryName"]}}</h1>
             </td>
           </tr>
           {% endfor %}
@@ -70,6 +70,7 @@
     {% endfor %}
   </div>
 
+  {% include 'disch_in/_letter_nav.html' %}
 
 
 
