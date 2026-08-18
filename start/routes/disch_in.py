@@ -7,6 +7,7 @@ from .helpers import (
     defaultEn,
     queryfromArgs,
     jsonDictFromUrl,
+    distinctByKey,
     splitDictInto2,
     switchBothTrafficLight,
     groupByFirstLetter,
@@ -29,32 +30,108 @@ def invoice():
     )
 
 
+def todayListsFromApi(lng):
+    """Fetch today's lists from the API, or an empty list when the call fails.
+
+    The lists page and the cargoes page work from the same rows, one per shipper
+    x cargo pair. jsonDictFromUrl survives a timeout only, and on a quiet failure
+    it gives back an error dict instead of a list. Anything that is not a real
+    list of rows comes back from here empty, which both pages answer with the
+    error page instead of a flask traceback.
+    """
+    api_url = app.config["DB_SERVER_API_URL"] + f"&command=todaylists&lng={lng}"
+    print(f"loading shippers list from api {api_url} {time.strftime('%H:%M:%S')}")
+    try:
+        todayLists = jsonDictFromUrl(api_url)
+    except (OSError, ValueError) as error:
+        # a timeout, a refused connection and an http error are all OSError,
+        # a damaged answer raises ValueError out of the json parser
+        print(f"todayListsFromApi. API call failed: {error} {time.strftime('%H:%M:%S')}")
+        return []
+    return todayLists if isinstance(todayLists, list) else []
+
+
 @app.route("/lists")
 def lists():
+    """Show one button per shipper that has a list open today.
+
+    The API gives one row per shipper x cargo pair, so a shipper with three
+    cargoes comes back three times. Here the rows are reduced to one per shipper
+    and the first list id of that shipper travels on as "list" - the cargoes page
+    only needs it to find the shipper again, the driver picks the real list there.
+    """
     print(f"entering lists def {time.strftime('%H:%M:%S')}")
     lng = defaultEn(request.args.get("lng"), vocabulary)
     voc = vocabulary[lng]["lists"]
-    okInvoice, invoiceFileName = readInvoice()
     query = queryfromArgs(request.args)
-    if not okInvoice:
-        return redirect(url_for("invoice") + query)
-    query = queryfromArgs(request.args) + f"&ifn={invoiceFileName}"
-    # get lists from api
-    api_url = app.config["DB_SERVER_API_URL"] + f"&command=todaylists&lng={lng}"
-    print(f"loading shippers list from api {api_url} {time.strftime('%H:%M:%S')}")
-    shippersLists = jsonDictFromUrl(api_url)
-    if len(shippersLists) == 0:
+    # the invoice is photographed once, on the way in. Coming back from the cargoes
+    # page "ifn" already says so, and the camera must not overwrite that photo
+    invoiceFileName = request.args.get("ifn")
+    if invoiceFileName is None:
+        okInvoice, invoiceFileName = readInvoice()
+        if not okInvoice:
+            return redirect(url_for("invoice") + query)
+    query = queryfromArgs(request.args, excludeKeysList=["ifn"]) + f"&ifn={invoiceFileName}"
+    todayLists = todayListsFromApi(lng)
+    if len(todayLists) == 0:
         return redirect(url_for("unknownerror") + query)
-    # allow to choose one and only list available, comment out if direct pass through required
-    # if len(shippersLists) == 1
-    #     return redirect(url_for('factories') + query + f"&list={shippersLists[0]['listId']}")
+    # allow to choose one and only shipper available, comment out if direct pass through required
+    # if len(todayLists) == 1:
+    #     return redirect(url_for('cargoes') + query + f"&list={todayLists[0]['listId']}")
+    distinctShippersShippersLists = distinctByKey(todayLists, "shipperId")
+    # sorted by the same text the page shows: the custom heading wins over the shipper name
+    distinctShippersShippersLists.sort(
+        key=lambda row: (row["truckScalesHeading"] or row["shipperName"]).strip().lower()
+    )
     print(f"loading lists page {time.strftime('%H:%M:%S')}")
     return render_template(
         "disch_in/lists.html",
-        title="Choose client and cargo",
+        title="Choose client",
         voc=voc,
         query=query,
-        shippersLists=shippersLists,
+        distinctShippersShippersLists=distinctShippersShippersLists,
+    )
+
+
+@app.route("/cargoes")
+def cargoes():
+    """Show one button per cargo of the shipper chosen on the lists page.
+
+    The lists page hands over the first list id of that shipper in "list".
+    Today's lists are fetched again here, the shipper is looked up by that id,
+    and every list of the same shipper becomes one cargo button. A shipper never
+    has the same cargo twice, so those rows are already distinct.
+    """
+    print(f"entering cargoes def {time.strftime('%H:%M:%S')}")
+    lng = defaultEn(request.args.get("lng"), vocabulary)
+    voc = vocabulary[lng]["cargoes"]
+    selectedListId = request.args.get("list")
+    # every cargo button appends its own "list", so the shipper's one must not travel on
+    query = queryfromArgs(request.args, excludeKeysList=["list"])
+    todayLists = todayListsFromApi(lng)
+    if len(todayLists) == 0:
+        return redirect(url_for("unknownerror") + query)
+    # the list ids from the api are numbers, the query string gives text - compare as text
+    selectedList = next(
+        (row for row in todayLists if str(row["listId"]) == str(selectedListId)), None
+    )
+    if selectedList is None:
+        # no "list" argument at all, or the list has been closed since the lists page
+        return redirect(url_for("unknownerror") + query + "&error=list not in today lists")
+    distinctCargoesShippersLists = [
+        row for row in todayLists if row["shipperId"] == selectedList["shipperId"]
+    ]
+    distinctCargoesShippersLists.sort(key=lambda row: row["cargoName"].strip().lower())
+    # the back button returns to the shipper choice, without the shipper picked here
+    backUrl = url_for("lists") + query
+    print(f"loading cargoes page {time.strftime('%H:%M:%S')}")
+    return render_template(
+        "disch_in/cargoes.html",
+        title="Choose cargo",
+        voc=voc,
+        query=query,
+        backUrl=backUrl,
+        distinctCargoesShippersLists=distinctCargoesShippersLists,
     )
 
 

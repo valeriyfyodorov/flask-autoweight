@@ -25,6 +25,10 @@
       "instructionText": "Select the Recipient from the invoice from the list:",
       "backButtonText": "Start over"
     },
+    "cargoes": {
+      "instructionText": "Select cargo from the list:",
+      "backButtonText": "Back"
+    },
     "printout": {
       "instructionText": "Select cargo from the list:",
       "backButtonText": "Back"
@@ -78,7 +82,6 @@
       "backButtonText": "Start over"
     }
   },
-
   "ru": {
     "direction": {
       "arrivalButtonText": "Прибытие. Начальное взвешивание",
@@ -104,6 +107,10 @@
     "lists": {
       "instructionText": "Выберите Получателя по накладной из списка:",
       "backButtonText": "Начать заново"
+    },
+    "cargoes": {
+      "instructionText": "Выберите груз из списка:",
+      "backButtonText": "Назад"
     },
     "printout": {
       "instructionText": "Выберите груз из списка:",
@@ -184,6 +191,10 @@
       "instructionText": "Izvēlieties Saņēmēju no pavadzīmes no saraksta:",
       "backButtonText": "Sākt no jauna"
     },
+    "cargoes": {
+      "instructionText": "Izvēlieties kravu no saraksta:",
+      "backButtonText": "Atpakaļ"
+    },
     "printout": {
       "instructionText": "Izvēlieties kravu no saraksta:",
       "backButtonText": "Atpakaļ"
@@ -247,7 +258,7 @@
       "instructionText": "Pasirinkite svarus su savo transporto priemone",
       "backButtonText": "Atgal"
     },
-     "invoice": {
+    "invoice": {
       "instructionText": "Įdėkite važtaraštį į terminalą (puse aukštyn)",
       "readyButtonText": "Atlikta",
       "backButtonText": "Atgal"
@@ -262,6 +273,10 @@
     "lists": {
       "instructionText": "Pasirinkite Gavėją iš važtaraščio iš sąrašo:",
       "backButtonText": "Pradėti iš naujo"
+    },
+    "cargoes": {
+      "instructionText": "Pasirinkite krovinį iš sąrašo:",
+      "backButtonText": "Atgal"
     },
     "printout": {
       "instructionText": "Pasirinkite krovinį iš sąrašo:",
@@ -342,6 +357,10 @@
       "instructionText": "Wybierz Odbiorcę z listy faktur:",
       "backButtonText": "Rozpocznij od nowa"
     },
+    "cargoes": {
+      "instructionText": "Wybierz ładunek z listy:",
+      "backButtonText": "Wróć"
+    },
     "printout": {
       "instructionText": "Wybierz ładunek z listy:",
       "backButtonText": "Wróć"
@@ -420,6 +439,10 @@
     "lists": {
       "instructionText": "Valige saatelehest Saaja loendist:",
       "backButtonText": "Alusta uuesti"
+    },
+    "cargoes": {
+      "instructionText": "Valige last loendist:",
+      "backButtonText": "Tagasi"
     },
     "printout": {
       "instructionText": "Valige last loendist:",

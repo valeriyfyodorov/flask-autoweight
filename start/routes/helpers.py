@@ -121,6 +121,23 @@ def groupByFirstLetter(rows, nameKey):
     return grouped
 
 
+def distinctByKey(rows, keyName):
+    """Keep only the first row of every distinct value of one key, in the original order.
+
+    Rows that repeat a value the caller is grouping by - the same shipper in
+    three lists, for example - collapse into their first row, which keeps all of
+    its other fields.
+    """
+    seen = set()
+    distinctRows = []
+    for row in rows:
+        value = row.get(keyName)
+        if value not in seen:
+            seen.add(value)
+            distinctRows.append(row)
+    return distinctRows
+
+
 def servePILimageAsPNG(img):
     file_object = BytesIO()
     # img.save(file_object, 'JPEG', quality=70) for jpg

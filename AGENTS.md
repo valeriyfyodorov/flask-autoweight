@@ -21,7 +21,7 @@ Assistant MQTT endpoint, and prints a weighing receipt.
   treat it as the entry point.
 - **`start/routes/`**
   - `top.py` — `/`, `/direction`, `/scales`, `/directions`, `/unknownerror`, `/farewell`
-  - `disch_in.py` — incoming: `/invoice`, `/lists`, `/factories`, `/plates`, `/cmr`
+  - `disch_in.py` — incoming: `/invoice`, `/lists`, `/cargoes`, `/factories`, `/plates`, `/cmr`
   - `disch_out.py` — outgoing: `/qrcode`
   - `printing.py` — `/qrinstructions`, `/qrimg`, `/printout`, `/waitprint`
   - `helpers.py` — shared utilities (query strings, API calls, traffic lights, image serving)
@@ -50,6 +50,13 @@ id, `1`=south `2`=north), `ptf`/`ptr` (front/rear plate), `wkg` (weight in kg), 
 (transport unit id), `list`, `fr`, `ifn`, `inr`/`iwt` (invoice nr / weight), `local`,
 `letter` (A-Z filter, `/factories` only — it is stripped before linking on to `/plates`).
 
+`list` means two different things along the way: between `/lists` and `/cargoes` it is the *first*
+list id of the chosen shipper — it only serves to find that shipper again — and from `/cargoes` on it
+is the list id of the chosen cargo. `/cargoes` therefore drops the incoming one with
+`excludeKeysList=["list"]` before the cargo buttons append their own, the same way `/factories` drops
+`letter`. Two `list=` keys in one url would silently win the wrong way round, `request.args.get`
+returns the first.
+
 Use `helpers.queryfromArgs(request.args, excludeKeysList=[...])` to rebuild the query string. Do not
 hand-assemble one.
 
@@ -62,12 +69,15 @@ Consequences an agent must respect:
 - **Two drivers using the two scales at once will clobber each other's invoice image.** The kiosk is
   single-user in practice, which is why this has never bitten, but any change that widens concurrency
   (threaded server, second terminal, background task) must fix this first.
-- The `ifn` query key looks like it carries the invoice filename, but it is written at
-  `disch_in.py:31` and **read nowhere**. Do not build on it without wiring it up properly.
+- The `ifn` query key does not carry a filename: `readInvoice()` returns its *number* slot there,
+  which is `""` on a Mac and the hard-coded `"XXX"` on the Pi. `/lists` reads it as a flag only — when
+  `ifn` is already in the query the invoice has been photographed on the way in, so the Back button of
+  `/cargoes` returns to the shipper list without sending the camera over the same photo again. Nothing
+  else reads it.
 - `TEMP_PLATE_IMG_FILE_FRONT` / `_REAR` are shared the same way in `defs.archivePlates`.
 
-- Incoming: `/` → `/direction` → `/scales` → `/invoice` → `/lists` → `/factories` → `/plates` →
-  `/cmr` (POST registers the unit via API) → `/directions` → `/qrinstructions`
+- Incoming: `/` → `/direction` → `/scales` → `/invoice` → `/lists` → `/cargoes` → `/factories` →
+  `/plates` → `/cmr` (POST registers the unit via API) → `/directions` → `/qrinstructions`
 - Outgoing: `/` → `/direction` → `/scales` → `/qrcode` → `/farewell` (reads QR, posts final weight)
   → `/printout` → `/waitprint` → `/`
 - `templates/idle_script.html` bounces the browser back to `/` after 60 s idle.
@@ -96,6 +106,12 @@ Consequences an agent must respect:
   Measured against the live API they drop rows: `greaterthan=a&lessthan=b` returns nothing although
   18 factories start with "A", and `greaterthan=i` skips the "I" ones. `/factories` therefore fetches
   the whole list in one call and groups it locally with `helpers.groupByFirstLetter`.
+- **`command=todaylists` returns one row per shipper × cargo pair**, so a shipper with three cargoes
+  appears three times. `/lists` reduces that to one button per shipper with `helpers.distinctByKey`
+  on `shipperId`, `/cargoes` filters the same fetch back down to the rows of that one shipper. Both
+  pages sort by the text they show. There is no caching — each page refetches through
+  `disch_in.todayListsFromApi`, which is also the one place where the exceptions `jsonDictFromUrl`
+  lets through (`OSError`, `ValueError`) are turned into an empty list and so into the error page.
 - **Factory names arrive with a leading space** (`" Abra, LPKS"`) and may start with a Latvian letter
   (Š, Ģ, Ķ). `helpers.firstLetterOf` trims and folds the accent so they file under S/G/K.
 - Templates are the only place formatting lives; route functions build a `content` dict and hand it

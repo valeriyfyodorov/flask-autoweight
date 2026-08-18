@@ -28,20 +28,15 @@
             </h2>
     </div>         
   </div>
-  {% for shipperList in shippersLists %}
+  {% for shipperList in distinctShippersShippersLists %}
       <div class="row" >
         <div class="col-md-10 offset-md-1">
           <a class="btn btn-secondary btn-lg btn-xl btn-block shadow" 
-          href="{{url_for('factories')+query}}&list={{shipperList['listId']}}">
-              
-            {{shipperList['cargoName']}}
-            - 
-            {% if (shipperList['truckScalesHeading'] | length)  > 0 %}
+          href="{{url_for('cargoes')+query}}&list={{shipperList['listId']}}">
+              {% if (shipperList['truckScalesHeading'] | length)  > 0 %}
                 {{shipperList['truckScalesHeading']}}
             {% else %}
-            <span style="font-size: 0.6em;">
-              {{shipperList['shipperName']}}
-              </span>
+            {{shipperList['shipperName']}}
             {% endif %}
           </a>
         </div>
