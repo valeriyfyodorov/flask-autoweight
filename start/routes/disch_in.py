@@ -15,6 +15,7 @@ from .helpers import (
     ALPHABET,
     NON_LETTER_KEY,
 )
+from start.intranet.config import STORED_IMAGES_KIOSK_IP
 from start.intranet.defs import readInvoice, archivePlates, archiveInvoice, archiveCargoImage
 
 
@@ -71,7 +72,11 @@ def lists():
         okInvoice, invoiceFileName = readInvoice()
         if not okInvoice:
             return redirect(url_for("invoice") + query)
-    query = queryfromArgs(request.args, excludeKeysList=["ifn"]) + f"&ifn={invoiceFileName}"
+    query = (
+        queryfromArgs(request.args, excludeKeysList=["ifn"])
+        + f"&ifn={invoiceFileName}"
+        + f"&kiosk_ip={STORED_IMAGES_KIOSK_IP}"
+    )
     todayLists = todayListsFromApi(lng)
     if len(todayLists) == 0:
         return redirect(url_for("unknownerror") + query)
@@ -247,13 +252,9 @@ def cmr():
                 if new_car is not None:
                     break
         if (new_car) is None:
-            return redirect(
-                url_for("unknownerror") + query + f"&error=new car api error {api_url}"
-            )
+            return redirect(url_for("unknownerror") + query + f"&error=new car api error {api_url}")
         if len(new_car) < 1:
-            return redirect(
-                url_for("unknownerror") + query + f"&error=new car api error {api_url}"
-            )
+            return redirect(url_for("unknownerror") + query + f"&error=new car api error {api_url}")
         if "id" not in new_car:
             return redirect(
                 url_for("unknownerror") + query + f"&error=probably repeated nr {api_url}"
