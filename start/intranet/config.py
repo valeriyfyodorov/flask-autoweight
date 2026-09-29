@@ -60,6 +60,15 @@ ALPR_API_TOKEN = "Token 702d66a3f614a31139fefd757892acfb85771ee7"
 ALPR_URL = "http://192.168.21.34:5002/plate-reader/"
 
 SCALES_NAME_FOR_ID = {"2": "north", "1": "south"}
+
+# A truck whose FIRST weighing falls inside this range (in tonnes, as the API gives weights)
+# is taken as arriving empty. If its second weighing is heavier, the cargo was loaded here
+# and shipped out of the port, so on the second weighing the usual weighing receipt
+# (prints/printout.html, 1 copy) is followed by the waybill (prints/cmr.html, 3 copies).
+EMPTY_ARRIVAL_MIN_TONNES = 10
+EMPTY_ARRIVAL_MAX_TONNES = 30
+# how many copies of that waybill come out of the printer (one sheet each, one print job)
+CMR_COPIES = 3
 TRAFFIC_LIGHT_API_URL = "http://192.168.21.82:8123/api/services/mqtt/publish"
 TRAFFIC_LIGHT_API_AUTH = "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiIxYTQ2NjM1ZmI3NWU0NmI1YmIzMzU2NjkzYzViYzg4YyIsImlhdCI6MTYzODk2OTA1NCwiZXhwIjoxOTU0MzI5MDU0fQ.ib-WYqlTWzzLsM3PVCLLkS6_0bVIc5G8f1GI_YI3VUI"
 SCALES = {

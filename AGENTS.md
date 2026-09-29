@@ -23,7 +23,7 @@ Assistant MQTT endpoint, and prints a weighing receipt.
   - `top.py` — `/`, `/direction`, `/scales`, `/directions`, `/unknownerror`, `/farewell`
   - `disch_in.py` — incoming: `/invoice`, `/lists`, `/cargoes`, `/factories`, `/plates`, `/cmr`
   - `disch_out.py` — outgoing: `/qrcode`
-  - `printing.py` — `/qrinstructions`, `/qrimg`, `/printout`, `/waitprint`
+  - `printing.py` — `/qrinstructions`, `/qrimg`, `/printout`, `/cmrprintout`, `/waitprint`
   - `helpers.py` — shared utilities (query strings, API calls, traffic lights, image serving)
   - `settings.py` — loads the `vocabulary` translation dict
   - `routes/__init__.py` does `from .x import *`. **A new route module must be added there** or its
@@ -80,6 +80,27 @@ Consequences an agent must respect:
   `/plates` → `/cmr` (POST registers the unit via API) → `/directions` → `/qrinstructions`
 - Outgoing: `/` → `/direction` → `/scales` → `/qrcode` → `/farewell` (reads QR, posts final weight)
   → `/printout` → `/waitprint` → `/`
+  - `/printout` always prints the weighing receipt `prints/printout.html` (1 copy). For a truck
+    that **arrived empty and left loaded** (cargo shipped from the port) the receipt page then
+    moves on to `/cmrprintout` instead of `/waitprint`, which prints the waybill `prints/cmr.html`
+    ("Kravas pavadzīme") and only then goes to `/waitprint`. The receipt's JS follows the
+    `next_page_name` the route passes in — it is no longer hard-coded to `waitprint`.
+    The test is `printing.arrivedEmptyLeftLoaded`: first weight strictly between
+    `EMPTY_ARRIVAL_MIN_TONNES` and `EMPTY_ARRIVAL_MAX_TONNES` (`config.py`, 10–30 t) **and** second
+    weight heavier than the first. An empty arrival that leaves no heavier keeps the normal receipt.
+  - The API keeps the **first** weighing in `weightingGrossWeight` and the **second** in
+    `weightingEmptyWeight` (0 until then), whatever the direction; `weightScales` is first minus
+    second. The "gross"/"empty" names only match reality for a discharging truck.
+  - Sender on the waybill is Alpha Osta (hard-coded in the template, same as `printout.html`).
+    Receiver is the factory chosen on arrival (`command=company&id=<factoryId>`), name and address
+    from its `invoiceAddressWording`, split into lines; factory `0` leaves the lines blank.
+  - **Copies:** `window.print()` cannot set a copy count, so `prints/cmr.html` repeats the form
+    `CMR_COPIES` times (`config.py`, 3) with a CSS page break between copies — one print job, one
+    sheet per copy. Do not "fix" this by setting copies in CUPS: that would multiply every receipt.
+  - `/printout` and `/cmrprintout` share their API fetch through `printing.printDataFromApi`
+    (3 tries, `None` when all fail, which both routes turn into the error page).
+  - Naming trap: `/cmr` and `disch_in/cmr.html` are the **incoming** invoice-number form, not the
+    waybill. The waybill is `/cmrprintout` and `prints/cmr.html`.
 - `templates/idle_script.html` bounces the browser back to `/` after 60 s idle.
 
 ## Conventions — match them, do not "fix" them
@@ -99,8 +120,10 @@ Consequences an agent must respect:
   - `json.JSONDecodeError` on a malformed body
 
   So when adding a call, still handle failure at the call site; do not assume the helper is a
-  complete safety net. `printing.py:printout` already wraps its calls in a retry loop for this
-  reason. Note it catches `socket.error`, which does not cover the JSON or HTTP cases above.
+  complete safety net. `printing.py:printDataFromApi` wraps its calls in a retry loop for this
+  reason: it catches `OSError` (network and HTTP errors — `socket.error`, `URLError` and
+  `HTTPError` are all `OSError`) and `ValueError` (bad JSON, and the quiet sentinel, which its
+  `apiAnswer` turns into a `ValueError`).
 - **Errors surface as redirects**, not exceptions: `redirect(url_for('unknownerror') + f"?error=…")`.
 - **`command=listfactories` accepts `greaterthan=`/`lessthan=` letter bounds — do not rely on them.**
   Measured against the live API they drop rows: `greaterthan=a&lessthan=b` returns nothing although
@@ -187,6 +210,12 @@ and do not propose moving them to environment variables unasked. Keep new consta
 rather than scattering them across modules.
 
 ## Working agreements
+
+- **Deployment is manual file copying** to the Pi's flash card — no git, no installer on the kiosk.
+  Keep every change to as few files as possible, and end the work with the list of files to copy.
+  `config.py` on the Pi carries its own values (`MAC_OS = False`, hardware settings), so for it
+  give the lines to paste in, not a whole file to overwrite. No new dependencies: the Pi runs the
+  2020 pins of `requirements.txt` (Flask 1.1.2), so new code must work there too.
 
 - **Ask before changing hardware I/O behaviour**: Modbus register offsets and scaling, GPIO pin
   numbers, the sampler-homing wait in `defs.delayedForSamplerCheck`, camera crop/warp geometry. A

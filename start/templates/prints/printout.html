@@ -180,7 +180,8 @@
     setTimeout("closePrintView()", 5000);
   });
   function closePrintView() {
-    document.location.href = "{{url_for("waitprint")}}" + document.location.search;
+    // /waitprint normally, /cmrprintout when the waybill has to follow (see printing.py:printout)
+    document.location.href = "{{next_page_name}}" + document.location.search;
   }
 </script>
 {% endblock %}

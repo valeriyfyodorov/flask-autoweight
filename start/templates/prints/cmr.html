@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{#
+  Waybill ("Kravas pavadzīme") for a truck that arrived empty and leaves loaded.
+  Rendered by printing.py:cmrprintout. The form is repeated `copies` times,
+  each copy on its own printed sheet, so one window.print() gives all copies.
+#}
+
+{% block styles %}
+<style>
+  .cmr-copy {
+    text-align: left;
+    padding: 20px 40px;
+    /* every copy starts on a new sheet ... */
+    page-break-after: always;
+  }
+
+  /* ... but no blank sheet after the last one */
+  .cmr-copy:last-child {
+    page-break-after: auto;
+  }
+
+  /* on screen the copies are told apart by a dashed line, on paper by the sheet */
+  @media screen {
+    .cmr-copy+.cmr-copy {
+      border-top: 2px dashed #999;
+    }
+  }
+
+  .cmr-label {
+    font-weight: bold;
+    width: 130px;
+    vertical-align: top;
+  }
+
+  .cmr-regnr {
+    border-collapse: collapse;
+    margin-left: auto;
+  }
+
+  .cmr-regnr td {
+    border: 1px solid black;
+    width: 24px;
+    height: 24px;
+    text-align: center;
+  }
+
+  .cmr-goods {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+
+  .cmr-goods th,
+  .cmr-goods td {
+    border: 1px solid black;
+    padding: 2px 6px;
+    height: 26px;
+  }
+
+  .cmr-goods th {
+    text-align: center;
+  }
+
+  .cmr-sign {
+    display: inline-block;
+    border-bottom: 1px solid black;
+    min-width: 220px;
+  }
+
+  .cmr-hint {
+    font-size: 0.75em;
+    text-align: center;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{#
+  One row of boxes with a registration number, one digit per box, like the paper form.
+  Latvian company numbers have 11 digits; an empty number gives empty boxes to fill by hand.
+#}
+{% macro regNrBoxes(regNr) %}
+<table class="cmr-regnr">
+  <tr>
+    <td style="border: 0; width: auto; padding-right: 8px;">Reģ. Nr.</td>
+    {% for i in range(11) %}
+    <td>{{ regNr[i] if i < regNr|length else "" }}</td>
+    {% endfor %}
+  </tr>
+</table>
+{% endmacro %}
+
+<div class="container-fluid">
+  {% for copy in range(copies) %}
+  <div class="cmr-copy">
+
+    <div style="text-align: center;">
+      <img src="{{ url_for('static', filename='images/logo.jpg') }}" width="80px" />
+    </div>
+
+    <!-- heading: number of the document and its date -->
+    <div class="d-flex justify-content-between" style="margin-top: 20px;">
+      <h5><b>KRAVAS PAVADZĪME</b> Nr. {{content["tranunit_id"]}}</h5>
+      <h5>{{content["loadedMoment"].strftime("%d.%m.%Y")}}</h5>
+    </div>
+
+    <!-- sender: always Alpha Osta, the same details as on the weighing receipt -->
+    <table style="width: 100%; margin-top: 20px;">
+      <tr>
+        <td class="cmr-label">Nosūtītājs:</td>
+        <td>SIA "Alpha Osta", Birztalu 26, Rīga, LV-1015</td>
+      </tr>
+    </table>
+    {{ regNrBoxes("40003103141") }}
+
+    <!-- receiver: the factory chosen on arrival, name and address line by line -->
+    <table style="width: 100%; margin-top: 20px;">
+      <tr>
+        <td class="cmr-label">Saņēmējs:</td>
+        <td>
+          {% for line in content["receiverLines"] %}
+          {{line}}<br />
+          {% else %}
+          <span class="cmr-sign" style="min-width: 100%;">&nbsp;</span>
+          {% endfor %}
+        </td>
+      </tr>
+    </table>
+    {{ regNrBoxes(content["receiverRegNr"]) }}
+
+    <!-- goods: one row with the cargo, a few blank rows as on the paper form -->
+    <table class="cmr-goods">
+      <thead>
+        <tr>
+          <th style="width: 60px;">Nr. p.k.</th>
+          <th>Nosaukums</th>
+          <th style="width: 120px;">Mērvienība</th>
+          <th style="width: 120px;">Daudzums</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="text-align: center;">1</td>
+          <td>{{content["cargoName"]}}</td>
+          <td style="text-align: center;">kg</td>
+          <td style="text-align: right;">{{"%.0f"|format(content["netWeightKg"])}}</td>
+        </tr>
+        {% for blankRow in range(3) %}
+        <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- signatures and the truck -->
+    <p style="margin-top: 30px;">
+      <b>Meistara v.u., paraksts</b> <span class="cmr-sign" style="min-width: 60%;">&nbsp;</span>
+    </p>
+    <p style="margin-top: 20px;">
+      <b>Automašīnas valsts Nr.</b> <span class="cmr-sign">{{content["nr"]}}</span>
+    </p>
+
+    <div class="d-flex justify-content-between" style="margin-top: 40px;">
+      <div>
+        <b>Nosūtītājs:</b> <span class="cmr-sign">&nbsp;</span>
+        <div class="cmr-hint">uzvārds</div>
+        <span class="cmr-sign" style="margin-left: 100px; margin-top: 20px;">&nbsp;</span>
+        <div class="cmr-hint">paraksts</div>
+      </div>
+      <div>
+        <b>Saņēmējs:</b> <span class="cmr-sign">&nbsp;</span>
+        <div class="cmr-hint">uzvārds</div>
+        <span class="cmr-sign" style="margin-left: 90px; margin-top: 20px;">&nbsp;</span>
+        <div class="cmr-hint">paraksts</div>
+      </div>
+    </div>
+
+    <p style="margin-top: 30px;">Z.V.</p>
+
+  </div>
+  {% endfor %}
+</div> <!-- /container -->
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+  // same as printout.html: print straight away (the kiosk browser skips the dialog),
+  // then go on to the "take your documents" page
+  $(function () {
+    window.print();
+    setTimeout("closePrintView()", 5000);
+  });
+  function closePrintView() {
+    document.location.href = "{{url_for("waitprint")}}" + document.location.search;
+  }
+</script>
+{% endblock %}
