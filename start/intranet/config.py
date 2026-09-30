@@ -64,7 +64,7 @@ SCALES_NAME_FOR_ID = {"2": "north", "1": "south"}
 # A truck whose FIRST weighing falls inside this range (in tonnes, as the API gives weights)
 # is taken as arriving empty. If its second weighing is heavier, the cargo was loaded here
 # and shipped out of the port, so on the second weighing the usual weighing receipt
-# (prints/printout.html, 1 copy) is followed by the waybill (prints/cmr.html, 3 copies).
+# (prints/printout.html, 1 copy) is followed by the waybill (prints/pavadzime.html, 3 copies).
 EMPTY_ARRIVAL_MIN_TONNES = 10
 EMPTY_ARRIVAL_MAX_TONNES = 30
 # how many copies of that waybill come out of the printer (one sheet each, one print job)

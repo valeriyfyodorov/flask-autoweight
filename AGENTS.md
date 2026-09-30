@@ -23,7 +23,7 @@ Assistant MQTT endpoint, and prints a weighing receipt.
   - `top.py` — `/`, `/direction`, `/scales`, `/directions`, `/unknownerror`, `/farewell`
   - `disch_in.py` — incoming: `/invoice`, `/lists`, `/cargoes`, `/factories`, `/plates`, `/cmr`
   - `disch_out.py` — outgoing: `/qrcode`
-  - `printing.py` — `/qrinstructions`, `/qrimg`, `/printout`, `/cmrprintout`, `/waitprint`
+  - `printing.py` — `/qrinstructions`, `/qrimg`, `/printout`, `/pavadzimeprintout`, `/waitprint`
   - `helpers.py` — shared utilities (query strings, API calls, traffic lights, image serving)
   - `settings.py` — loads the `vocabulary` translation dict
   - `routes/__init__.py` does `from .x import *`. **A new route module must be added there** or its
@@ -82,7 +82,7 @@ Consequences an agent must respect:
   → `/printout` → `/waitprint` → `/`
   - `/printout` always prints the weighing receipt `prints/printout.html` (1 copy). For a truck
     that **arrived empty and left loaded** (cargo shipped from the port) the receipt page then
-    moves on to `/cmrprintout` instead of `/waitprint`, which prints the waybill `prints/cmr.html`
+    moves on to `/pavadzimeprintout` instead of `/waitprint`, which prints the waybill `prints/pavadzime.html`
     ("Kravas pavadzīme") and only then goes to `/waitprint`. The receipt's JS follows the
     `next_page_name` the route passes in — it is no longer hard-coded to `waitprint`.
     The test is `printing.arrivedEmptyLeftLoaded`: first weight strictly between
@@ -94,13 +94,13 @@ Consequences an agent must respect:
   - Sender on the waybill is Alpha Osta (hard-coded in the template, same as `printout.html`).
     Receiver is the factory chosen on arrival (`command=company&id=<factoryId>`), name and address
     from its `invoiceAddressWording`, split into lines; factory `0` leaves the lines blank.
-  - **Copies:** `window.print()` cannot set a copy count, so `prints/cmr.html` repeats the form
+  - **Copies:** `window.print()` cannot set a copy count, so `prints/pavadzime.html` repeats the form
     `CMR_COPIES` times (`config.py`, 3) with a CSS page break between copies — one print job, one
     sheet per copy. Do not "fix" this by setting copies in CUPS: that would multiply every receipt.
-  - `/printout` and `/cmrprintout` share their API fetch through `printing.printDataFromApi`
+  - `/printout` and `/pavadzimeprintout` share their API fetch through `printing.printDataFromApi`
     (3 tries, `None` when all fail, which both routes turn into the error page).
   - Naming trap: `/cmr` and `disch_in/cmr.html` are the **incoming** invoice-number form, not the
-    waybill. The waybill is `/cmrprintout` and `prints/cmr.html`.
+    waybill. The waybill is `/pavadzimeprintout` and `prints/pavadzime.html`.
 - `templates/idle_script.html` bounces the browser back to `/` after 60 s idle.
 
 ## Conventions — match them, do not "fix" them

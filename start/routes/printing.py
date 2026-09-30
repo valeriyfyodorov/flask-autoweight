@@ -224,10 +224,10 @@ def printout():
     }
     next_page_name = url_for("waitprint")
     # a truck that came in empty and leaves loaded gets this receipt AND, right after it,
-    # the waybill: the receipt page moves on to /cmrprintout instead of /waitprint
+    # the waybill: the receipt page moves on to /pavadzimeprintout instead of /waitprint
     if arrivedEmptyLeftLoaded(tranunit):
-        print(f"truck arrived empty and left loaded, cmr follows {time.strftime('%H:%M:%S')}")
-        next_page_name = url_for("cmrprintout")
+        print(f"truck arrived empty and left loaded, pavadzime follows {time.strftime('%H:%M:%S')}")
+        next_page_name = url_for("pavadzimeprintout")
     return render_template(
         'prints/printout.html',
         title='Alpha-Osta: Noliktavas svēršanas/glabājuma kvīts',
@@ -237,8 +237,8 @@ def printout():
     )
 
 
-@app.route('/cmrprintout')
-def cmrprintout():
+@app.route('/pavadzimeprintout')
+def pavadzimeprintout():
     """Show and print the waybill ("Kravas pavadzīme") of a truck loaded at the port.
 
     The weighing receipt page (/printout) moves on to here, after printing itself, when
@@ -247,7 +247,7 @@ def cmrprintout():
     full name and address from the factory's "invoiceAddressWording". The page holds
     CMR_COPIES copies of the form, one per printed sheet, so a single print job gives them all.
     """
-    print(f"entering cmrprintout def {time.strftime('%H:%M:%S')}")
+    print(f"entering pavadzimeprintout def {time.strftime('%H:%M:%S')}")
     query = queryfromArgs(request.args)
     tranunit_id = request.args.get('tranunit')
     printData = printDataFromApi(tranunit_id)
@@ -272,9 +272,9 @@ def cmrprintout():
         "netWeightKg": -tranunit["weightScales"] * 1000,
         "nr": tranunit["nr"],
     }
-    print(f"loading cmr printout page {time.strftime('%H:%M:%S')}")
+    print(f"loading pavadzime printout page {time.strftime('%H:%M:%S')}")
     return render_template(
-        'prints/cmr.html',
+        'prints/pavadzime.html',
         title='Alpha-Osta: Kravas pavadzīme',
         content=content,
         copies=CMR_COPIES,

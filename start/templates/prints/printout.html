@@ -180,7 +180,7 @@
     setTimeout("closePrintView()", 5000);
   });
   function closePrintView() {
-    // /waitprint normally, /cmrprintout when the waybill has to follow (see printing.py:printout)
+    // /waitprint normally, /pavadzimeprintout when the waybill has to follow (see printing.py:printout)
     document.location.href = "{{next_page_name}}" + document.location.search;
   }
 </script>
