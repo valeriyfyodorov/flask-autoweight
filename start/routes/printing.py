@@ -143,18 +143,27 @@ def printDataFromApi(tranunit_id):
     return None
 
 
+def weightLooksEmpty(weightTonnes):
+    """Tell whether a truck of this weight (in tonnes) looks empty.
+
+    "Empty" means the weight lies in the EMPTY_ARRIVAL_... range of config.py. The
+    incoming pages ask this on the first weighing (with the scales weight turned into
+    tonnes), the printout asks it again on the way out about the first weighing.
+    """
+    return EMPTY_ARRIVAL_MIN_TONNES < weightTonnes < EMPTY_ARRIVAL_MAX_TONNES
+
+
 def arrivedEmptyLeftLoaded(tranunit):
     """Tell whether the truck came in empty and went out loaded - cargo shipped from the port.
 
     The API keeps the first weighing in "weightingGrossWeight" and the second one in
     "weightingEmptyWeight" (0 until the truck is weighed the second time), both in tonnes.
-    "Came in empty" means the first weight lies in the EMPTY_ARRIVAL_... range of config.py.
+    "Came in empty" means the first weight looks empty (see weightLooksEmpty).
     An empty truck that goes out no heavier is not loaded, it keeps the usual receipt.
     """
     firstWeight = tranunit["weightingGrossWeight"]
     secondWeight = tranunit["weightingEmptyWeight"]
-    arrivedEmpty = EMPTY_ARRIVAL_MIN_TONNES < firstWeight < EMPTY_ARRIVAL_MAX_TONNES
-    return arrivedEmpty and secondWeight > firstWeight
+    return weightLooksEmpty(firstWeight) and secondWeight > firstWeight
 
 
 @app.route('/printout')

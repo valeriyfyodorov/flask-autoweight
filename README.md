@@ -98,6 +98,42 @@ The shell scripts in the repository root:
 | `multistart.sh` | Same idea, backgrounds Flask and launches Chromium |
 | `chromium.sh` | Full-screen Chromium with error dialogs, infobars and translation prompts off, and `--kiosk-printing` |
 
+### Updating files on the kiosk over SSH
+
+| | |
+| --- | --- |
+| Production Pi | `pi@192.168.100.2` (SSH) |
+| App folder | `/home/pi/Desktop/flask` (same layout as this repository) |
+
+The Pi has no git checkout: changed files are copied over one by one. Before overwriting, keep the
+old version next to it as `<file>.bak.<YYMMDDHHmm>`, so a bad update is undone with one `cp`.
+Run the commands from the repository root on the Mac; replace the stamp and the file list.
+
+```sh
+# 1. back up the files about to change (on the Pi, -p keeps the original date)
+ssh pi@192.168.100.2 'cd /home/pi/Desktop/flask && for f in \
+    start/routes/disch_in.py start/routes/printing.py; do
+    cp -p "$f" "$f.bak.2609301540"; done'
+
+# 2. copy the new versions - one scp per target folder
+scp start/routes/disch_in.py start/routes/printing.py \
+    pi@192.168.100.2:/home/pi/Desktop/flask/start/routes/
+
+# 3. check what landed
+ssh pi@192.168.100.2 'ls -l /home/pi/Desktop/flask/start/routes/ | grep disch_in'
+
+# undo: put a backup back
+ssh pi@192.168.100.2 'cd /home/pi/Desktop/flask && cp -p \
+    start/routes/disch_in.py.bak.2609301540 start/routes/disch_in.py'
+```
+
+- **Never scp `start/intranet/config.py`.** The Pi's copy has its own values (`MAC_OS = False`,
+  hardware settings). Back it up the same way, then add new lines by hand:
+  `ssh -t pi@192.168.100.2 nano /home/pi/Desktop/flask/start/intranet/config.py`.
+- `start.sh` runs Flask with `FLASK_ENV=development`, so the reloader picks up changed `.py` files
+  and templates without a restart. A file that fails to import stops the app instead — if the
+  kiosk shows a connection error after an update, restore the backup and reboot the Pi.
+
 ## Repository layout
 
 ```

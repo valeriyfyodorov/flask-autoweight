@@ -134,6 +134,18 @@
         }
     });
 
+    // an empty truck is registered right on this submit (no cmr page after it), which
+    // takes a few seconds - a second tap must not register the same truck twice
+    var formSent = false;
+    $('#form').on('submit', function (event) {
+        if (formSent) {
+            event.preventDefault();
+            return;
+        }
+        formSent = true;
+        $('#go').prop('disabled', true);
+    });
+
     $(".numbersonly").keypress(function (e) {
     //if the letter is not digit then display error and don't type anything
     if (e.which != 8 && e.which != 0 && (e.which < 48 || e.which > 57)) {

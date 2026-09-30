@@ -15,8 +15,40 @@ from .helpers import (
     ALPHABET,
     NON_LETTER_KEY,
 )
+from .printing import weightLooksEmpty
+from start.intranet import config
 from start.intranet.config import STORED_IMAGES_KIOSK_IP
 from start.intranet.defs import readInvoice, archivePlates, archiveInvoice, archiveCargoImage
+
+# The kiosk keeps its own config.py, which may predate this setting - fall back to the default.
+EMPTY_ARRIVAL_DECLARED_KG = getattr(config, "EMPTY_ARRIVAL_DECLARED_KG", 24999)
+
+
+def truckArrivedEmpty(args):
+    """Tell whether the truck on the scales looks empty on its first weighing.
+
+    An empty truck comes to load cargo at the port. It brings no invoice/ cmr of its
+    own - the kiosk prints the waybill when it leaves - so the invoice photo and the
+    cmr page are skipped for it. The scales weight travels in the query as "wkg",
+    in kilograms; the empty range in config.py is in tonnes.
+    """
+    try:
+        weightKg = float(args.get("wkg"))
+    except (TypeError, ValueError):
+        # no weight in the query or not a number - treat as a normal loaded truck
+        return False
+    return weightLooksEmpty(weightKg / 1000)
+
+
+def autoInvoiceNr(listId):
+    """Make up the cmr nr for an empty truck: "<LISTID>-MMDDHHmm", e.g. "1234-09300930".
+
+    The API needs a nr to register the unit, and it must not repeat, so the list id
+    gets the kiosk's current month, day, hour and minute added (no seconds). Two
+    empty trucks on the same list within one minute would get the same nr - the API
+    then refuses the second one as a repeated nr and the driver sees the error page.
+    """
+    return f"{listId}-{time.strftime('%m%d%H%M')}"
 
 
 @app.route("/invoice")
@@ -25,6 +57,10 @@ def invoice():
     lng = defaultEn(request.args.get("lng"), vocabulary)
     voc = vocabulary[lng]["invoice"]
     query = queryfromArgs(request.args)
+    # an empty truck has no invoice to scan, it goes straight on to the lists
+    if truckArrivedEmpty(request.args):
+        print(f"truck looks empty, invoice scan skipped {time.strftime('%H:%M:%S')}")
+        return redirect(url_for("lists") + query)
     print(f"loading invoices page {time.strftime('%H:%M:%S')}")
     return render_template(
         "disch_in/invoice.html", title="Scan invoice or CMR", voc=voc, query=query
@@ -68,6 +104,10 @@ def lists():
     # the invoice is photographed once, on the way in. Coming back from the cargoes
     # page "ifn" already says so, and the camera must not overwrite that photo
     invoiceFileName = request.args.get("ifn")
+    if invoiceFileName is None and truckArrivedEmpty(request.args):
+        # no photo for an empty truck. "ifn" still travels on, empty, just like
+        # readInvoice() gives it on a Mac, so the cargoes back button works the same
+        invoiceFileName = ""
     if invoiceFileName is None:
         okInvoice, invoiceFileName = readInvoice()
         if not okInvoice:
@@ -208,7 +248,16 @@ def plates():
         plate = request.form.get("ptf") + "/" + request.form.get("ptr")
         if len(plate) < 7:
             return redirect(url_for("invoice") + query)
-        query += f"&pt={plate}"
+        # the plates are typed by the driver and may hold a space - encode them for the url
+        query += "&pt=" + urllib.parse.quote(plate, safe="")
+        # an empty truck skips the cmr page: nr and weight are made up, the real weight
+        # comes later from the difference of the two weighings
+        if truckArrivedEmpty(request.args):
+            invoiceNr = autoInvoiceNr(request.args.get("list"))
+            print(f"truck looks empty, registering as {invoiceNr} {time.strftime('%H:%M:%S')}")
+            return registerNewUnit(
+                query, invoiceNr, EMPTY_ARRIVAL_DECLARED_KG, withInvoiceImage=False
+            )
         return redirect(url_for("cmr") + query)
     lng = defaultEn(request.args.get("lng"), vocabulary)
     voc = vocabulary[lng]["plates"]
@@ -236,35 +285,8 @@ def cmr():
     lng = defaultEn(request.args.get("lng"), vocabulary)
     if request.method == "POST":
         invoiceNr = request.form.get("inr")
-        # invoiceNr = invoiceNr.replace(
-        # "/", "").replace("\\", "").replace(" ", "")
-        # alphanumeric_filter = filter(str.isalnum, invoiceNr)
-        # invoiceNr = "".join(alphanumeric_filter)
-        invoiceNr = urllib.parse.quote(invoiceNr, safe="")
         invoiceWeight = request.form.get("iwt")
-        api_query = query[1:] + f"&inr={invoiceNr}&iwt={invoiceWeight}"
-        api_url = app.config["DB_SERVER_API_URL"] + f"&command=newunitweight" + f"&{api_query}"
-        new_car = jsonDictFromUrl(api_url)
-        if (new_car) is None:
-            for i in range(5):  # retry API
-                print(f"getting new car from api {api_url}")
-                new_car = jsonDictFromUrl(api_url)
-                if new_car is not None:
-                    break
-        if (new_car) is None:
-            return redirect(url_for("unknownerror") + query + f"&error=new car api error {api_url}")
-        if len(new_car) < 1:
-            return redirect(url_for("unknownerror") + query + f"&error=new car api error {api_url}")
-        if "id" not in new_car:
-            return redirect(
-                url_for("unknownerror") + query + f"&error=probably repeated nr {api_url}"
-            )
-        archivePlates(new_car["id"], request.args)
-        archiveCargoImage(new_car["cargoId"], request.args)
-        archiveInvoice(new_car["id"], request.args, invoiceNr)
-        scaleId = request.args.get("sc")
-        switchBothTrafficLight(scaleId)
-        return redirect(url_for("directions") + f"?tranunit={new_car['id']}&local=1&lng={lng}")
+        return registerNewUnit(query, invoiceNr, invoiceWeight)
     voc = vocabulary[lng]["cmr"]
     action = url_for("cmr") + query
     backUrl = url_for("plates") + queryfromArgs(request.args, excludeKeysList=["pt"])
@@ -277,3 +299,48 @@ def cmr():
         backUrl=backUrl,
         action=action,
     )
+
+
+def registerNewUnit(query, invoiceNr, invoiceWeight, withInvoiceImage=True):
+    """Register the truck at the API as a new transport unit and send it on to the terminal.
+
+    Called by the cmr page with the nr and weight the driver typed in, and by the plates
+    page for an empty truck with the auto nr and fixed weight. "query" is the query string
+    of everything chosen so far (list, factory, plates, scales weight...). Gives back the
+    redirect to the directions page, or to the error page when the API says no.
+    The plate photos and the invoice photo are archived under the new unit id, the top
+    camera photo under the cargo id. The invoice photo is left out when withInvoiceImage
+    is False: an empty truck had no invoice photographed, and the temp file would still
+    hold the photo of the truck before it.
+    The nr and weight come as plain text, they are encoded for the url here.
+    """
+    lng = defaultEn(request.args.get("lng"), vocabulary)
+    inr = urllib.parse.quote(str(invoiceNr), safe="")
+    iwt = urllib.parse.quote(str(invoiceWeight), safe="")
+    api_url = app.config["DB_SERVER_API_URL"] + "&command=newunitweight&" + query[1:]
+    api_url += f"&inr={inr}&iwt={iwt}"
+    print(f"registering new car at api {api_url} {time.strftime('%H:%M:%S')}")
+    # the error text is encoded, a "&" in it would cut it short on the error page
+    errorUrl = url_for("unknownerror") + query + "&error="
+    # Called once, never retried: the API may have registered the truck even when its
+    # answer got lost, and a second call would then register it twice.
+    try:
+        new_car = jsonDictFromUrl(api_url)
+    except (OSError, ValueError) as error:
+        # a refused connection and an http error are OSError, a damaged answer ValueError
+        print(f"registerNewUnit. API call failed: {error} {time.strftime('%H:%M:%S')}")
+        return redirect(errorUrl + urllib.parse.quote(f"new car api error: {error}"))
+    # a quiet failure of jsonDictFromUrl and a refused nr (e.g. repeated) both come back
+    # without an id - the API's own "error" text, when there is one, tells which
+    if not isinstance(new_car, dict) or "id" not in new_car or "cargoId" not in new_car:
+        apiError = new_car.get("error", "") if isinstance(new_car, dict) else ""
+        print(f"registerNewUnit. API answer without id: {new_car} {time.strftime('%H:%M:%S')}")
+        errorText = f"registration failed or invalid API response {apiError}"
+        return redirect(errorUrl + urllib.parse.quote(errorText))
+    archivePlates(new_car["id"], request.args)
+    archiveCargoImage(new_car["cargoId"], request.args)
+    if withInvoiceImage:
+        archiveInvoice(new_car["id"], request.args, invoiceNr)
+    scaleId = request.args.get("sc")
+    switchBothTrafficLight(scaleId)
+    return redirect(url_for("directions") + f"?tranunit={new_car['id']}&local=1&lng={lng}")

@@ -78,6 +78,26 @@ Consequences an agent must respect:
 
 - Incoming: `/` → `/direction` → `/scales` → `/invoice` → `/lists` → `/cargoes` → `/factories` →
   `/plates` → `/cmr` (POST registers the unit via API) → `/directions` → `/qrinstructions`
+  - **Empty arrival (truck comes to load at the port):** `disch_in.truckArrivedEmpty` tests the
+    scales weight `wkg` (kg) with `printing.weightLooksEmpty` — the same `EMPTY_ARRIVAL_MIN/MAX_TONNES`
+    range the exit-side printout uses. For such a truck:
+    - `/invoice` redirects straight to `/lists`, and `/lists` does not fire the camera; it passes
+      `ifn=""` on (the same value a Mac run gives).
+    - `/plates` POST does not go to `/cmr`. It registers the unit itself with the auto nr
+      `<LISTID>-MMDDHHmm` (`disch_in.autoInvoiceNr`, kiosk time, no seconds — two empty trucks on
+      one list within the same minute collide, and the API refuses the second as a repeated nr)
+      and the declared weight
+      `EMPTY_ARRIVAL_DECLARED_KG` (`config.py`, 24999), then goes on to `/directions`.
+      The API cannot register a unit without `inr`/`iwt`, which is why they are made up rather than
+      left out. The real weight is the difference between the two weighings.
+    - Both `/cmr` POST and that `/plates` path register through `disch_in.registerNewUnit`. The empty
+      path passes `withInvoiceImage=False`: nothing was photographed, and `TEMP_INVOICE_IMG_FILE`
+      would still hold the *previous* truck's invoice. Callers hand over the nr and weight as plain
+      text; `registerNewUnit` URL-encodes them. `/plates` encodes the typed `pt` itself (plates may
+      hold a space).
+    - `plates.html` blocks a second submit. A double tap would otherwise register the truck twice,
+      or, within the same minute, send the driver to the error page as a repeated nr although the
+      first tap registered fine.
 - Outgoing: `/` → `/direction` → `/scales` → `/qrcode` → `/farewell` (reads QR, posts final weight)
   → `/printout` → `/waitprint` → `/`
   - `/printout` always prints the weighing receipt `prints/printout.html` (1 copy). For a truck
@@ -86,7 +106,8 @@ Consequences an agent must respect:
     ("Kravas pavadzīme") and only then goes to `/waitprint`. The receipt's JS follows the
     `next_page_name` the route passes in — it is no longer hard-coded to `waitprint`.
     The test is `printing.arrivedEmptyLeftLoaded`: first weight strictly between
-    `EMPTY_ARRIVAL_MIN_TONNES` and `EMPTY_ARRIVAL_MAX_TONNES` (`config.py`, 10–30 t) **and** second
+    `EMPTY_ARRIVAL_MIN_TONNES` and `EMPTY_ARRIVAL_MAX_TONNES` (`config.py`, 10–30 t, checked by
+    `printing.weightLooksEmpty`) **and** second
     weight heavier than the first. An empty arrival that leaves no heavier keeps the normal receipt.
   - The API keeps the **first** weighing in `weightingGrossWeight` and the **second** in
     `weightingEmptyWeight` (0 until then), whatever the direction; `weightScales` is first minus
@@ -124,6 +145,9 @@ Consequences an agent must respect:
   reason: it catches `OSError` (network and HTTP errors — `socket.error`, `URLError` and
   `HTTPError` are all `OSError`) and `ValueError` (bad JSON, and the quiet sentinel, which its
   `apiAnswer` turns into a `ValueError`).
+  `disch_in.registerNewUnit` catches the same two, but calls `newunitweight` **once, never
+  retried**: it creates a record, and a lost answer does not mean the truck was not registered.
+  Any answer without `id` and `cargoId` (the quiet sentinel or a refused nr) goes to the error page.
 - **Errors surface as redirects**, not exceptions: `redirect(url_for('unknownerror') + f"?error=…")`.
 - **`command=listfactories` accepts `greaterthan=`/`lessthan=` letter bounds — do not rely on them.**
   Measured against the live API they drop rows: `greaterthan=a&lessthan=b` returns nothing although
@@ -211,7 +235,9 @@ rather than scattering them across modules.
 
 ## Working agreements
 
-- **Deployment is manual file copying** to the Pi's flash card — no git, no installer on the kiosk.
+- **Deployment is manual file copying** to the Pi (flash card, or `scp` over SSH — host, folder
+  and backup-then-copy commands are in README.md, "Updating files on the kiosk over SSH") — no
+  git, no installer on the kiosk.
   Keep every change to as few files as possible, and end the work with the list of files to copy.
   `config.py` on the Pi carries its own values (`MAC_OS = False`, hardware settings), so for it
   give the lines to paste in, not a whole file to overwrite. No new dependencies: the Pi runs the

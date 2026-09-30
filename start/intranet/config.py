@@ -67,6 +67,10 @@ SCALES_NAME_FOR_ID = {"2": "north", "1": "south"}
 # (prints/printout.html, 1 copy) is followed by the waybill (prints/pavadzime.html, 3 copies).
 EMPTY_ARRIVAL_MIN_TONNES = 10
 EMPTY_ARRIVAL_MAX_TONNES = 30
+# The same range decides on the FIRST weighing that the truck arrived empty to load here:
+# it skips the invoice photo and the cmr page, and the unit is registered with this
+# declared weight (kg) and an auto nr "<LISTID>-MMDDHHmm" instead of the driver's input.
+EMPTY_ARRIVAL_DECLARED_KG = 24999
 # how many copies of that waybill come out of the printer (one sheet each, one print job)
 CMR_COPIES = 3
 TRAFFIC_LIGHT_API_URL = "http://192.168.21.82:8123/api/services/mqtt/publish"
