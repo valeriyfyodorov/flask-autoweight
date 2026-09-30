@@ -130,7 +130,11 @@ Consequences an agent must respect:
   This is not PEP 8 and that is intentional. New code follows the surrounding style.
 - **Progress tracing is bare `print`**, always with a timestamp:
   `print(f"entering invoice def {time.strftime('%H:%M:%S')}")`. There is no `logging` setup; do not
-  introduce one unasked.
+  introduce one unasked. The log file comes from the shell instead: `start.sh` pipes all Flask
+  output (prints, the Werkzeug request lines, tracebacks) through `tee` into
+  `logs/flask_YYMMDD_HHMM.log` (one file per start, deleted after 30 days, `*.log` is gitignored),
+  with `PYTHONUNBUFFERED=1` so the pipe does not hold lines back. The error page's reason travels in
+  its url, so the request line `GET /unknownerror?...&error=...` in that log is where it shows.
 - **External calls partly swallow errors — do not over-trust this.** `helpers.jsonDictFromUrl`
   returns a sentinel `{"result": 100, "error": "unknown error"}` when it fails *quietly*, and callers
   check the shape of the result. But it only has `except timeout` (`socket.timeout`). These still
@@ -147,7 +151,15 @@ Consequences an agent must respect:
   `apiAnswer` turns into a `ValueError`).
   `disch_in.registerNewUnit` catches the same two, but calls `newunitweight` **once, never
   retried**: it creates a record, and a lost answer does not mean the truck was not registered.
-  Any answer without `id` and `cargoId` (the quiet sentinel or a refused nr) goes to the error page.
+  Any answer without `id` and `cargoId` goes to the error page.
+- **`newunitweight` refuses a repeat with an empty body** (HTTP 200, 0 bytes) — measured on the live
+  API: the same plate sent twice registers once, the second call gets nothing back.
+  `jsonDictFromUrl` turns that into its quiet sentinel (`"error": "unknown error"`), and
+  `registerNewUnit` shows `disch_in.ALREADY_REGISTERED_ERROR` for it: one fixed text in English,
+  Latvian and Russian together, whatever `lng` is, because the terminal staff read it. Other
+  failures keep their technical text. Trucks are also registered **outside the kiosk** (the office
+  system, e.g. units with typed declaration nrs `19`…`22` on 2026-09-30), so a driver can reach the
+  kiosk already registered — that is the usual cause of this message, not a kiosk fault.
 - **Errors surface as redirects**, not exceptions: `redirect(url_for('unknownerror') + f"?error=…")`.
 - **`command=listfactories` accepts `greaterthan=`/`lessthan=` letter bounds — do not rely on them.**
   Measured against the live API they drop rows: `greaterthan=a&lessthan=b` returns nothing although
@@ -169,8 +181,9 @@ Consequences an agent must respect:
 | | Production (authoritative) | Local development |
 | --- | --- | --- |
 | Host | Raspberry Pi | macOS laptop |
-| Python | Pi system Python | `uv`, Python ≥3.13 |
-| Deps | `requirements.txt` (2020 pins, Flask 1.1.2) | `pyproject.toml` + `uv.lock` (Flask 3.1) |
+| Python | Pi system Python **3.7.3** (`/usr/bin/python3`) | `uv`, Python ≥3.13 |
+| Deps | **Flask 1.0.2, Werkzeug 0.14.1** as installed (checked 2026-09-30) — older than `requirements.txt` says | `pyproject.toml` + `uv.lock` (Flask 3.1) |
+| Browser | Firefox 102 ESR, kiosk mode, `localhost:5000` | any |
 | `MAC_OS` | `False` | `True` |
 | GPIO/camera | real `RPi.GPIO`, `picamera` | stub `GPIO.py`, dummy JPEGs |
 | Started by | `production_start.sh`, `startup.sh`, `multistart.sh`, `chromium.sh` | `./start.sh` |
@@ -240,8 +253,9 @@ rather than scattering them across modules.
   git, no installer on the kiosk.
   Keep every change to as few files as possible, and end the work with the list of files to copy.
   `config.py` on the Pi carries its own values (`MAC_OS = False`, hardware settings), so for it
-  give the lines to paste in, not a whole file to overwrite. No new dependencies: the Pi runs the
-  2020 pins of `requirements.txt` (Flask 1.1.2), so new code must work there too.
+  give the lines to paste in, not a whole file to overwrite. No new dependencies: the Pi runs
+  Python 3.7.3 with Flask 1.0.2 / Werkzeug 0.14.1 — not even the `requirements.txt` pins — so new
+  code must work there too (no walrus, no `str.removeprefix`, no Flask 2+ APIs).
 
 - **Ask before changing hardware I/O behaviour**: Modbus register offsets and scaling, GPIO pin
   numbers, the sampler-homing wait in `defs.delayedForSamplerCheck`, camera crop/warp geometry. A

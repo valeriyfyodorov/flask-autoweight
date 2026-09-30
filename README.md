@@ -27,10 +27,20 @@ recognition was wrong), and enter the invoice number and declared weight. The te
 truck in the central system and prints driving instructions with a QR code and a map of where to
 unload. The traffic lights in front of the scales turn green.
 
+**Incoming empty (coming to load at the port).** A truck that weighs 10–30 t on arrival is taken as
+empty: it has no invoice of its own yet, so the terminal skips the invoice photo and the invoice
+number/weight page. After the plates it registers the truck by itself, with the number
+`<list id>-MMDDHHmm` (e.g. `3797-09302031`) and a declared weight of 24 999 kg; the real weight comes
+from the two weighings. If the system already knows the truck — for example the office registered
+it first — the terminal shows "Registration refused … probably already registered" in English,
+Latvian and Russian together, so the staff can read it whatever language the driver chose.
+
 **Outgoing (departure).** The driver holds the QR code from those instructions under the camera. The
 terminal recognises the transport unit, records the final weight, cross-checks the plates against
 what the database has on file, and prints the receipt — either a goods-acceptance receipt or a
 release waybill, depending on whether the truck got heavier or lighter between the two weighings.
+A truck that came in empty (10–30 t) and leaves heavier — cargo loaded at the port — also gets the
+waybill "Kravas pavadzīme" in 3 copies right after the receipt.
 The lights turn green and the driver leaves.
 
 ## How it works under the hood
@@ -84,15 +94,16 @@ import — they are listed under "Known gaps" in [AGENTS.md](AGENTS.md).
 
 ## Running in production (Raspberry Pi)
 
-Production runs on the Pi's system Python against the pins in `requirements.txt`, with
-`MAC_OS = False`. `pyproject.toml` and `uv.lock` describe the newer local development setup and are
+Production runs on the Pi's system Python, with `MAC_OS = False`. What is really installed there
+(checked 2026-09-30) is Python 3.7.3, Flask 1.0.2 and Werkzeug 0.14.1 — older than the pins in
+`requirements.txt`. `pyproject.toml` and `uv.lock` describe the newer local development setup and are
 not what the Pi uses.
 
 The shell scripts in the repository root:
 
 | Script | What it does |
 | --- | --- |
-| `start.sh` | Sets `FLASK_APP=start`, disables the Werkzeug debug PIN, runs `flask run` |
+| `start.sh` | Sets `FLASK_APP=start`, disables the Werkzeug debug PIN, runs `flask run` and copies its output into `logs/` |
 | `production_start.sh` | Activates the virtualenv and serves on `0.0.0.0:3000` |
 | `startup.sh` | Boot script: opens a terminal running `start.sh`, a ping window, then Firefox in kiosk mode |
 | `multistart.sh` | Same idea, backgrounds Flask and launches Chromium |
@@ -105,15 +116,17 @@ The shell scripts in the repository root:
 | Production Pi | `pi@192.168.100.2` (SSH) |
 | App folder | `/home/pi/Desktop/flask` (same layout as this repository) |
 
-The Pi has no git checkout: changed files are copied over one by one. Before overwriting, keep the
-old version next to it as `<file>.bak.<YYMMDDHHmm>`, so a bad update is undone with one `cp`.
+The Pi is not updated with git (its `.git` folder is a stale 2023 leftover): changed files are
+copied over one by one. Before overwriting, keep the old version next to it as
+`<file>.<MMDDHHmm>.bak`, so a bad update is undone with one `cp`. (The first update of 2026-09-30
+used `<file>.bak.2609301540` — those files are still there.)
 Run the commands from the repository root on the Mac; replace the stamp and the file list.
 
 ```sh
 # 1. back up the files about to change (on the Pi, -p keeps the original date)
 ssh pi@192.168.100.2 'cd /home/pi/Desktop/flask && for f in \
     start/routes/disch_in.py start/routes/printing.py; do
-    cp -p "$f" "$f.bak.2609301540"; done'
+    cp -p "$f" "$f.09302035.bak"; done'
 
 # 2. copy the new versions - one scp per target folder
 scp start/routes/disch_in.py start/routes/printing.py \
@@ -124,7 +137,7 @@ ssh pi@192.168.100.2 'ls -l /home/pi/Desktop/flask/start/routes/ | grep disch_in
 
 # undo: put a backup back
 ssh pi@192.168.100.2 'cd /home/pi/Desktop/flask && cp -p \
-    start/routes/disch_in.py.bak.2609301540 start/routes/disch_in.py'
+    start/routes/disch_in.py.09302035.bak start/routes/disch_in.py'
 ```
 
 - **Never scp `start/intranet/config.py`.** The Pi's copy has its own values (`MAC_OS = False`,
@@ -133,6 +146,36 @@ ssh pi@192.168.100.2 'cd /home/pi/Desktop/flask && cp -p \
 - `start.sh` runs Flask with `FLASK_ENV=development`, so the reloader picks up changed `.py` files
   and templates without a restart. A file that fails to import stops the app instead — if the
   kiosk shows a connection error after an update, restore the backup and reboot the Pi.
+  (Confirmed on 2026-09-30: `disch_in.py` was recompiled 3 seconds after it was copied.)
+  Shell scripts such as `start.sh` itself are not watched — they take effect at the next reboot.
+
+### Reading the Flask log on the kiosk
+
+`start.sh` writes everything Flask prints into `/home/pi/Desktop/flask/logs/flask_YYMMDD_HHMM.log`,
+one file per start of the app, and deletes files older than 30 days. The same lines still show in
+the "Starting Flask" terminal window.
+
+```sh
+# the newest log, last 200 lines
+ssh pi@192.168.100.2 'cd /home/pi/Desktop/flask/logs && tail -n 200 "$(ls -t flask_*.log | head -1)"'
+
+# only the problems: error pages, Python tracebacks, server errors (500)
+ssh pi@192.168.100.2 'cd /home/pi/Desktop/flask/logs && grep -n -A 20 -E "unknownerror|Traceback| 500 " "$(ls -t flask_*.log | head -1)"'
+
+# download all logs to the Mac
+scp -r pi@192.168.100.2:/home/pi/Desktop/flask/logs ~/Downloads/kiosk-logs
+```
+
+What the usual lines mean:
+
+- `GET /unknownerror?...&error=...` — the driver got the error page; the reason is in `error=`
+  (percent-encoded, e.g. `%20` is a space).
+- `jsonDictFromUrl. ... zero length response received` followed by `registerNewUnit. API answer
+  without id` — the API refused the registration, almost always because the truck is already
+  registered (by the office, or by an earlier try at the kiosk). Look the plate up in the central
+  system before suspecting the kiosk.
+- `readRtspImage. Failed to capture image at rtsp://...` — one camera did not answer; the photo for
+  the archive is missing, the registration itself carries on.
 
 ## Repository layout
 

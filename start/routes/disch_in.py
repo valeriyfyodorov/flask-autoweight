@@ -301,6 +301,15 @@ def cmr():
     )
 
 
+# Shown on the error page when the API refuses a registration. It is in English, Latvian and
+# Russian at once, whatever language the driver chose, so that the terminal staff can read it.
+ALREADY_REGISTERED_ERROR = (
+    "Registration refused: this truck or its CMR number is probably already registered."
+    " / Reģistrācija atteikta: šī automašīna vai tās CMR numurs, iespējams, jau ir reģistrēts."
+    " / Регистрация отклонена: эта машина или её номер CMR, вероятно, уже зарегистрированы."
+)
+
+
 def registerNewUnit(query, invoiceNr, invoiceWeight, withInvoiceImage=True):
     """Register the truck at the API as a new transport unit and send it on to the terminal.
 
@@ -330,12 +339,16 @@ def registerNewUnit(query, invoiceNr, invoiceWeight, withInvoiceImage=True):
         # a refused connection and an http error are OSError, a damaged answer ValueError
         print(f"registerNewUnit. API call failed: {error} {time.strftime('%H:%M:%S')}")
         return redirect(errorUrl + urllib.parse.quote(f"new car api error: {error}"))
-    # a quiet failure of jsonDictFromUrl and a refused nr (e.g. repeated) both come back
-    # without an id - the API's own "error" text, when there is one, tells which
+    # an answer without an id means the unit was not registered
     if not isinstance(new_car, dict) or "id" not in new_car or "cargoId" not in new_car:
         apiError = new_car.get("error", "") if isinstance(new_car, dict) else ""
         print(f"registerNewUnit. API answer without id: {new_car} {time.strftime('%H:%M:%S')}")
-        errorText = f"registration failed or invalid API response {apiError}"
+        if apiError == "unknown error":
+            # jsonDictFromUrl's sign of an empty answer - the way the API refuses a truck
+            # that is already registered (checked against the live API on 2026-09-30)
+            errorText = ALREADY_REGISTERED_ERROR
+        else:
+            errorText = f"registration failed or invalid API response {apiError}"
         return redirect(errorUrl + urllib.parse.quote(errorText))
     archivePlates(new_car["id"], request.args)
     archiveCargoImage(new_car["cargoId"], request.args)
