@@ -5,7 +5,13 @@ import qrcode
 import time
 from .settings import vocabulary
 from .helpers import defaultEn, queryfromArgs, servePILimageAsPNG, dateFromJson, jsonDictFromUrl
-from start.intranet.config import EMPTY_ARRIVAL_MIN_TONNES, EMPTY_ARRIVAL_MAX_TONNES, CMR_COPIES
+from start.intranet import config
+
+# The kiosk keeps its own config.py, which may predate these settings - fall back to the
+# defaults instead of failing the import (and with it the whole app) at startup.
+EMPTY_ARRIVAL_MIN_TONNES = getattr(config, "EMPTY_ARRIVAL_MIN_TONNES", 10)
+EMPTY_ARRIVAL_MAX_TONNES = getattr(config, "EMPTY_ARRIVAL_MAX_TONNES", 30)
+CMR_COPIES = getattr(config, "CMR_COPIES", 3)
 
 
 @app.route('/qrinstructions')
